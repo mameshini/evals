@@ -1,0 +1,14 @@
+botbuilder-azure==4.16.1
+botbuilder-integration-aiohttp==4.16.1
+botbuilder-core==4.16.1
+botbuilder-dialogs==4.16.1
+botbuilder-schema==4.16.1
+gunicorn==22.0.0
+pydantic==2.8.2
+pydantic-settings==2.4.0
+pydantic_core==2.20.1
+python-dotenv==1.0.1
+semantic-kernel==1.4.0
+braintrust
+autoevals
+openai
