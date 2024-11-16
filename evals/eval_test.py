@@ -44,11 +44,10 @@ async def main():
     # Initialize OpenAI chat completion API by providing a custom AsyncAzureOpenAI to Semantic Kernel
     # This is where the error is happening: Input should be an instance of AsyncAzureOpenAI [type=is_instance_of, input_value=<braintrust.oai.OpenAIV1Wrapper 
     # Comment out the line below to use the default OpenAI chat completion API
-    #chat_completion = AzureChatCompletion(
-    #    deployment_name=os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME"),
-    #    async_client=braintrust_client
-    #)
-    
+    chat_completion = AzureChatCompletion(
+        deployment_name=os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME"),
+        async_client=braintrust_client
+    )
 
     # Initialize OpenAI chat completion API without Braintrust - working fine, but not using the proxy
     chat_completion = AzureChatCompletion(
