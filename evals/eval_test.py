@@ -4,27 +4,22 @@
 
 import asyncio
 import os
+import time
+import logging
 
 from semantic_kernel import Kernel
 from semantic_kernel.utils.logging import setup_logging
-from semantic_kernel.functions import kernel_function
-from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
-from semantic_kernel.connectors.ai.function_choice_behavior import FunctionChoiceBehavior
-from semantic_kernel.connectors.ai.chat_completion_client_base import ChatCompletionClientBase
-from semantic_kernel.contents.chat_history import ChatHistory
-from semantic_kernel.functions.kernel_arguments import KernelArguments
-from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
-from openai import AsyncAzureOpenAI
-import semantic_kernel as sk
 from semantic_kernel.core_plugins.time_plugin import TimePlugin
+from semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion
+from openai import AsyncOpenAI
 
 from dotenv import load_dotenv
 import braintrust
 from braintrust import EvalAsync
+from braintrust import init_logger, traced
 from autoevals import Factuality
 
-import logging
-
+@traced
 async def main():
 
     logger = logging.getLogger("kernel")
@@ -32,32 +27,25 @@ async def main():
 
     BRAINTRUST_API_KEY = os.environ.get("BRAINTRUST_API_KEY")
     logger.info(f"Braintrust key: {BRAINTRUST_API_KEY}")  
-    braintrust.login()  # This is optional, but makes it easier to grab the api url (and other variables) later on
+    braintrust.login(org_name="AMN")  # This is optional, but makes it easier to grab the api url (and other variables) later on
+    braintrust.init_logger(project="Dev")
 
-    braintrust_client = braintrust.wrap_openai(
-        AsyncAzureOpenAI(
-            azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
-            api_version='2024-02-15-preview'  # Use the appropriate API version
-        )
+    client = AsyncOpenAI(
+        base_url="https://api.braintrust.dev/v1/proxy",
+        api_key=os.environ["BRAINTRUST_API_KEY"],  # Can use Braintrust, Anthropic, etc. API keys here
     )
 
-    # Initialize OpenAI chat completion API by providing a custom AsyncAzureOpenAI to Semantic Kernel
-    # This is where the error is happening: Input should be an instance of AsyncAzureOpenAI [type=is_instance_of, input_value=<braintrust.oai.OpenAIV1Wrapper 
-    #chat_completion = AzureChatCompletion(
-    #    deployment_name=os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME"),
-    #    async_client=braintrust_client
-    #)
-
-    # Initialize OpenAI chat completion API without Braintrust - working fine, but not using the proxy
-    service = AzureChatCompletion(
-        service_id="default",
-        deployment_name=os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME"),
-        endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-        api_key=os.getenv("AZURE_OPENAI_API_KEY")
+    start = time.time()
+    response = await client.chat.completions.create(
+        model="gpt-4o",  # Can use claude-2, llama-2-13b-chat, etc. here
+        messages=[{"role": "user", "content": "What is a proxy?"}],
+        seed=1,  # A seed activates the proxy's cache
     )
-    service.client.base_url = "https://api.braintrust.dev/v1/proxy"
+    print(response.choices[0].message.content)
+    print(f"Took {time.time()-start}s")
 
-    # Initialize the kernel abd add chat_completion service to it
+    service = OpenAIChatCompletion(async_client=client, service_id="chat_completion", ai_model_id="gpt-4o")
+    
     kernel = Kernel()
     kernel.add_service(service)
 
