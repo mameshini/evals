@@ -16,7 +16,7 @@ from openai import AsyncOpenAI
 from dotenv import load_dotenv
 import braintrust
 from braintrust import EvalAsync
-from braintrust import init_logger, traced
+from braintrust import init_logger, traced, start_span
 from autoevals import Factuality
 
 @traced
@@ -43,6 +43,9 @@ async def main():
     )
     print(response.choices[0].message.content)
     print(f"Took {time.time()-start}s")
+    with start_span() as span:
+        result = response.choices[0].message.content
+        span.log(input="What is a proxy?", output=result)
 
     service = OpenAIChatCompletion(async_client=client, service_id="chat_completion", ai_model_id="gpt-4o")
     
@@ -65,6 +68,9 @@ async def main():
     prompt_function = kernel.add_function(function_name="test01", plugin_name="sample", prompt=prompt)
     response = await kernel.invoke(prompt_function, request=prompt)
     print(response)
+    with start_span() as span:
+        result = response.string()
+        span.log(input="prompt", output=result)
 
     # Also run a simple eval 
     if os.getenv("USE_BRAINTRUST_EVALS") == "true":    
