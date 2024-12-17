@@ -1,11 +1,9 @@
 import os
 import requests
 import pytest
-import logging
 from dotenv import load_dotenv
 
 def test_get_caller():
-    logger = logging.getLogger("kernel")
     load_dotenv()
 
     # ServiceNow instance details
@@ -17,7 +15,7 @@ def test_get_caller():
         'sysparm_display_value': 'true',
         'sysparm_exclude_reference_link': 'true',
         'sysparm_limit': 1,
-        'sysparm_query': f'email={email}^user_nameISEMPTY'
+        'sysparm_query': f'email={email}'
     }
 
     # Make the REST API call
@@ -36,6 +34,10 @@ def test_get_caller():
     
     if len(data['result']) > 0:
         user = data['result'][0]
+        sys_id = user['sys_id']
+        print(f"User sys_id: {user['sys_id']}")
+        print(f"User email: {user['email']}")
+        print(f"User user_name: {user['user_name']}")
         # Verify key fields are present
         assert 'sys_id' in user
         assert 'email' in user

@@ -1,0 +1,139 @@
+kind: AdaptiveDialog
+beginDialog:
+  kind: OnUnknownIntent
+  id: main
+  priority: -1
+  actions:
+    - kind: ConditionGroup
+      id: conditionGroup_1iEEzW
+      conditions:
+        - id: conditionItem_evFljD
+          condition: =IsBlank(Topic.Question)
+          actions:
+            - kind: SetVariable
+              id: gHnNLC
+              variable: Topic.Question
+              value: =System.Activity.Text
+
+    - kind: InvokeConnectorAction
+      id: fFHHCc
+      input:
+        binding:
+          fields: text
+          limit: 5
+          query: =Topic.Question
+
+      output:
+        kind: SingleVariableOutputBinding
+        variable: Topic.GetKnowledgeArticles
+
+      connectionReference: cr3fb_itHelpdeskV1.connectionreference.cr51e_itHelpDeskCopilot.cr.wC4Tw1wa
+      operationId: GetKnowledgeArticles
+
+    - kind: ParseValue
+      id: hdVvwt
+      variable: Topic.KBData
+      valueType:
+        kind: Record
+        properties:
+          articles:
+            type:
+              kind: Table
+              properties:
+                fields:
+                  type:
+                    kind: Record
+                    properties:
+                      text:
+                        type:
+                          kind: Record
+                          properties:
+                            display_value: String
+                            label: String
+                            name: String
+                            type: String
+                            value: String
+
+                id: String
+                link: String
+                number: String
+                rank: Number
+                score: Number
+                snippet: String
+                title: String
+
+          meta:
+            type:
+              kind: Record
+              properties:
+                properties:
+                  type:
+                    kind: Record
+                    properties:
+                      count: Number
+                      end: Number
+                      fields: String
+                      filter: String
+                      kb: String
+                      language: String
+                      query: String
+                      start: Number
+                      status:
+                        type:
+                          kind: Record
+                          properties:
+                            code: Number
+
+                      ts_query_id: String
+
+                type: String
+
+      value: "=\"[]\""
+
+    - kind: SetVariable
+      id: anG3kj
+      variable: Topic.KBData
+      value: =Topic.GetKnowledgeArticles
+
+    - kind: SetVariable
+      id: RVZuKU
+      variable: Topic.KBCustomData
+      value: "=ForAll(Topic.KBData.articles, {Content: Concatenate(title, \" - \", Substitute(PlainText(fields.text.display_value), \"\\n\\r\", \"\"))})"
+
+    - kind: SearchAndSummarizeContent
+      id: search-content
+      variable: Topic.Answer
+      userInput: =System.Activity.Text
+      moderationLevel: High
+      publicDataSource: {}
+      sharePointSearchDataSource: {}
+      customDataSource:
+        searchResults: =Topic.KBCustomData
+
+      tone: Friendly
+
+    - kind: ConditionGroup
+      id: has-answer-conditions
+      conditions:
+        - id: has-answer
+          condition: =!IsBlank(Topic.Answer)
+          actions:
+            - kind: SendActivity
+              id: sendActivity_QkpvsI
+              activity:
+                text:
+                  - Is there anything else I can help you with?
+                quickReplies:
+                  - kind: MessageBack
+                    title: What can I ask?
+                    text: What can I ask?
+
+            - kind: EndDialog
+              id: end-topic
+              clearTopicQueue: true
+
+inputType:
+  properties:
+    Question:
+      displayName: Question
+      type: String
