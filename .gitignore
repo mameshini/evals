@@ -1,2 +1,6 @@
 .venv
 .env
+helpdesk_incident_analysis.csv
+helpdesk_incident_train_data.csv
+incidents_servicedesk.csv
+incidents_servicedesk_large.csv
