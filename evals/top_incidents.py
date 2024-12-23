@@ -95,10 +95,12 @@ def analyze_top_incidents():
     top_100_percentages = (df['Configuration item'].value_counts().head(100) / total_records * 100)
     print("\nTop 100 Configuration Items by Frequency:")
     print("========================================")
+    print("Configuration Item, Count, Percentage")
     for item, count in top_100_config_items.items():
         percentage = top_100_percentages[item]
-        print(f"{item:<60} Count: {count:>5} ({percentage:.1f}% of total)")
-
+        #print(f"{item:<60} Count: {count:>5} ({percentage:.1f}% of total)")
+        print(f"{item}, {count}, {percentage:.1f}%")
+        
 
     # Get top 30 Configuration Items by frequency
     top_30_config_items = df['Configuration item'].value_counts().head(30)
