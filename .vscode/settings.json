@@ -4,6 +4,8 @@
     "python.testing.unittestEnabled": true,
     "python.testing.nosetestsEnabled": false,
     "python.testing.pytestArgs": [
-        "tests"
-    ]
+        "tests",
+        "evals"
+    ],
+    "python.testing.autoTestDiscoverOnSaveEnabled": true
 }

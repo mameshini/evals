@@ -1,0 +1,45 @@
+{
+    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json",
+    "manifestVersion": "devPreview",
+    "version": "1.0.10",
+    "id": "8df3f51c-9e44-490e-aac5-6dbea8feac12",
+    "developer": {
+      "name": "AMN Healthcare",
+      "mpnId": "",
+      "websiteUrl": "https://amnhealthcare.com",
+      "privacyUrl": "https://www.amnhealthcare.com/privacy-policy/",
+      "termsOfUseUrl": "https://www.amnhealthcare.com/legal/"
+    },
+    "name": { "short": "IT Helpdesk", "full": "IT Helpdesk agent" },
+    "description": {
+      "short": "Built using Microsoft Copilot Studio.",
+      "full": "Help employees stay informed, productive, and connected. Create agents and add important topics for your organization using an intuitive, graphical interface. No code required. Create your own at https://aka.ms/microsoftcopilotstudio."
+    },
+    "icons": { "outline": "outline.png", "color": "color.png" },
+    "accentColor": "#07687d",
+    "bots": [
+      {
+        "botId": "8df3f51c-9e44-490e-aac5-6dbea8feac12",
+        "isNotificationOnly": false,
+        "supportsFiles": true,
+        "scopes": ["personal"],
+        "registrationInfo": {
+          "source": "microsoftCopilotStudio",
+          "environment": "0a77acc2-2804-ed48-8b70-9e9055a23218"
+        },
+        "supportsCalling": false
+      }
+    ],
+    "permissions": ["identity", "messageTeamMembers"],
+    "validDomains": [
+      "*.botframework.com",
+      "*.*.botframework.com",
+      "copilotstudio.microsoft.com",
+      "copilotstudio.preview.microsoft.com"
+    ],
+    "webApplicationInfo": {
+      "id": "8df3f51c-9e44-490e-aac5-6dbea8feac12",
+      "resource": "https://copilotstudio.microsoft.com"
+    }
+  }
+  

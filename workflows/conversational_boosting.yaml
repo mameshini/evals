@@ -20,7 +20,7 @@ beginDialog:
       input:
         binding:
           fields: text
-          limit: 5
+          limit: 3
           query: =Topic.Question
 
       output:
@@ -28,6 +28,9 @@ beginDialog:
         variable: Topic.GetKnowledgeArticles
 
       connectionReference: cr3fb_itHelpdeskV1.connectionreference.cr51e_itHelpDeskCopilot.cr.wC4Tw1wa
+      connectionProperties:
+        mode: Invoker
+
       operationId: GetKnowledgeArticles
 
     - kind: ParseValue
@@ -98,17 +101,25 @@ beginDialog:
     - kind: SetVariable
       id: RVZuKU
       variable: Topic.KBCustomData
-      value: "=ForAll(Topic.KBData.articles, {Content: Concatenate(title, \" - \", Substitute(PlainText(fields.text.display_value), \"\\n\\r\", \"\"))})"
+      value: "=ForAll(Topic.KBData.articles, {Content: Concatenate(title, \" - \", Substitute(PlainText(fields.text.display_value), \"\\n\\r\", \"\")), ContentLocation: Concatenate(\"https://amndev.service-now.com/sp?id=kb_article_view&sysparm_article=\", number)})"
 
     - kind: SearchAndSummarizeContent
       id: search-content
       variable: Topic.Answer
       userInput: =System.Activity.Text
-      moderationLevel: High
+      moderationLevel: Low
+      applyModelKnowledgeSetting: false
       publicDataSource: {}
       sharePointSearchDataSource: {}
       customDataSource:
         searchResults: =Topic.KBCustomData
+
+      fileSearchDataSource:
+        searchFilesMode:
+          kind: SearchAllFiles
+
+      knowledgeSources:
+        kind: SearchAllKnowledgeSources
 
       tone: Friendly
 
@@ -117,20 +128,45 @@ beginDialog:
       conditions:
         - id: has-answer
           condition: =!IsBlank(Topic.Answer)
-          actions:
-            - kind: SendActivity
-              id: sendActivity_QkpvsI
-              activity:
-                text:
-                  - Is there anything else I can help you with?
-                quickReplies:
-                  - kind: MessageBack
-                    title: What can I ask?
-                    text: What can I ask?
 
-            - kind: EndDialog
-              id: end-topic
-              clearTopicQueue: true
+      elseActions:
+        - kind: SearchAndSummarizeContent
+          id: e0Nape
+          displayName: Fallback to external knowledge
+          variable: Topic.Answer
+          userInput: =System.Activity.Text
+          moderationLevel: Low
+          publicDataSource: {}
+          sharePointSearchDataSource: {}
+          customDataSource:
+            searchResults: =Topic.KBCustomData
+
+          fileSearchDataSource:
+            searchFilesMode:
+              kind: SearchSpecificFiles
+              files:
+                - cr3fb_itHelpdeskV1.component.Snowflake_MFA_Authentication_Setup.docx_udJ
+                - cr3fb_itHelpdeskV1.component.OneLoginKnowledgeBaseArticle.pdf_XI6
+
+          knowledgeSources:
+            kind: SearchSpecificKnowledgeSources
+
+          responseCaptureType: TextOnly
+          tone: Friendly
+
+    - kind: SendActivity
+      id: f5tKaA
+      activity:
+        text:
+          - Is there anything else I can help you with?
+        quickReplies:
+          - kind: MessageBack
+            title: What can I ask?
+            text: What can I ask?
+
+    - kind: EndDialog
+      id: in81un
+      clearTopicQueue: true
 
 inputType:
   properties:
