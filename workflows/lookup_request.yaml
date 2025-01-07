@@ -1,44 +1,72 @@
 kind: AdaptiveDialog
-modelDescription: This topic will return a list of IT service requests that the user originally opened.
+modelDescription: This topic will handle queries to look up details about a specific service request.
 beginDialog:
   kind: OnRecognizedIntent
   id: main
   intent:
     triggerQueries:
-      - What tickets do i have open
-      - Show me all my requests
-      - What tickets have I opened recently
-      - View my requests
-      - My tickets
+      - Find my request
+      - Check request status
+      - Lookup ticket
+      - Who is my ticket assigned to
+      - Check on a request
+      - What is the status
+      - Lookup a request
 
   actions:
+    - kind: Question
+      id: question_RmS8cJ
+      interruptionPolicy:
+        allowInterruption: true
+        interruptionTopicListFilter:
+          kind: IncludeSelectedTopics
+          allowedInterruptTopics:
+            - cr3fb_itHelpdeskV1.topic.CreateRequest
+            - cr3fb_itHelpdeskV1.topic.Escalate
+            - cr3fb_itHelpdeskV1.topic.Goodbye
+            - cr3fb_itHelpdeskV1.topic.Greeting
+            - cr3fb_itHelpdeskV1.topic.WhatCanIAsk
+            - cr3fb_itHelpdeskV1.topic.LookupRequest
+            - cr3fb_itHelpdeskV1.topic.StartOver
+            - cr3fb_itHelpdeskV1.topic.Thankyou
+            - cr3fb_itHelpdeskV1.topic.ViewMyRequests
+
+      unrecognizedPrompt: That does not appear to be a valid service request number format. Can you please try again?
+      repeatCount: 1
+      alwaysPrompt: false
+      variable: init:Topic.SNServiceRequestNumber
+      prompt: What is the service request number?
+      entity:
+        kind: RegexEntityReference
+        entityId: cr3fb_itHelpdeskV1.customtype.SNSRNumber
+
     - kind: BeginDialog
-      id: Kdqck1
+      id: XuyspE
       dialog: cr3fb_itHelpdeskV1.topic.GetCaller
 
     - kind: ConditionGroup
-      id: conditionGroup_FpZDxw
+      id: Cueekw
       conditions:
-        - id: conditionItem_cBwxA9
+        - id: ML3X6z
           condition: =IsBlank(Global.SNCallerId)
           actions:
             - kind: GotoAction
-              id: J972Yw
-              actionId: sendActivity_fXVZDM
+              id: 5MgfyZ
+              actionId: sendActivity_cQKpwB
 
     - kind: InvokeConnectorAction
-      id: invokeConnectorAction_bGnm9n
+      id: invokeConnectorAction_4OE66R
       input:
         binding:
           sysparm_display_value: true
           sysparm_exclude_reference_link: true
-          sysparm_limit: 20
-          sysparm_query: =Concatenate("caller_id=",Global.SNCallerId,"^ORDERBYDESCopened_at")
+          sysparm_limit: 1
+          sysparm_query: =Concatenate("number=",Topic.SNServiceRequestNumber,"^","caller_id=",Global.SNCallerId)
           tableType: incident
 
       output:
         binding:
-          result: Topic.GetRequestsResult
+          result: Topic.RequestResults
 
       connectionReference: cr3fb_itHelpdeskV1.connectionreference.cr51e_itHelpDeskCopilot.cr.wC4Tw1wa
       connectionProperties:
@@ -708,19 +736,24 @@ beginDialog:
       operationId: GetRecords
 
     - kind: ConditionGroup
-      id: conditionGroup_kztMIn
+      id: conditionGroup_YSxvRw
       conditions:
-        - id: conditionItem_tBf43T
-          condition: =IsEmpty(Topic.GetRequestsResult)
+        - id: conditionItem_ncpqXZ
+          condition: =IsEmpty(Topic.RequestResults)
           actions:
             - kind: SendActivity
-              id: sendActivity_fXVZDM
-              activity: It looks like you do not have any service incidents that were previously opened.
+              id: sendActivity_cQKpwB
+              activity:
+                text:
+                  - I could not find a service request with that number for you. Please try again or choose to view all your service requests.
+                quickReplies:
+                  - kind: MessageBack
+                    text: View my requests
 
       elseActions:
         - kind: ParseValue
-          id: fCpU7S
-          variable: Topic.Requests
+          id: dVLoF3
+          variable: Topic.ServiceRequest
           valueType:
             kind: Table
             properties:
@@ -820,718 +853,21 @@ beginDialog:
           value: "=\"[]\""
 
         - kind: SetVariable
-          id: setVariable_cqlZQM
-          variable: Topic.Requests
-          value: =Topic.GetRequestsResult
-
-        - kind: SetVariable
-          id: setVariable_CQKOp1
-          variable: Topic.RequestList
-          value: |-
-            =Concat(
-                ForAll(
-                    Topic.Requests,
-                    Concatenate(
-                        "Request Number: ", ThisRecord.number, Char(13), 
-                        "- ", "State: ", ThisRecord.state, Char(13),
-                        "- ", "Assigned To: ", ThisRecord.assigned_to, Char(13), 
-                        "- ", "Title: ", ThisRecord.short_description, Char(13), 
-                        "- ", "Description: ", ThisRecord.description, Char(13), 
-                        "- ", "Opened On: ", DateValue(ThisRecord.opened_at), Char(13), Char(10), Char(13)
-                    ) As Value
-                ), 
-                Value
-            )
+          id: setVariable_nF9PbU
+          variable: Topic.ServiceRequest
+          value: =Topic.RequestResults
 
         - kind: SendActivity
-          id: sendActivity_YdVsMU
+          id: sendActivity_l35Wns
           activity: |-
-            {If(CountRows(Topic.Requests)=1,"I found one incident.",Concatenate("Here is a list of your most recent ",CountRows(Topic.Requests)," incidents."))}
+            Here is what I found.
             
-            
-            {Topic.RequestList}
-
-    - kind: InvokeConnectorAction
-      id: invokeConnectorAction_s9NyZE
-      input:
-        binding:
-          sysparm_display_value: true
-          sysparm_exclude_reference_link: true
-          sysparm_limit: 20
-          sysparm_query: =Concatenate("requested_for=",Global.SNCallerId,"^ORDERBYDESCopened_at")
-          tableType: sc_req_item
-
-      output:
-        binding:
-          result: Topic.GetReqItemResult
-
-      connectionReference: cr3fb_itHelpdeskV1.shared_service-now.shared-service-now-a0008fb7-ba04-458d-95bf-923574c26487
-      connectionProperties:
-        mode: Invoker
-
-      dynamicOutputSchema:
-        kind: Record
-        properties:
-          result:
-            order: 0
-            type:
-              kind: Table
-              properties:
-                action_status:
-                  displayName: Action status
-                  order: 101
-                  type: String
-
-                active:
-                  displayName: Active
-                  order: 25
-                  type: String
-
-                activity_due:
-                  displayName: Activity due
-                  description: Date by which the Inactivity Monitor expects the task to be updated
-                  order: 100
-                  type: String
-
-                additional_assignee_list:
-                  displayName: Additional assignee list
-                  description: Additional assignees
-                  order: 41
-                  type: String
-
-                approval:
-                  displayName: Approval
-                  order: 105
-                  type: String
-
-                approval_history:
-                  displayName: Approval history
-                  order: 7
-                  type: String
-
-                approval_set:
-                  displayName: Approval set
-                  order: 31
-                  type: String
-
-                assigned_to:
-                  displayName: Assigned to
-                  description: Person primarily responsible for working this task
-                  order: 48
-                  type: String
-
-                assignment_group:
-                  displayName: Assignment group
-                  order: 88
-                  type: String
-
-                backordered:
-                  displayName: Backordered
-                  order: 76
-                  type: String
-
-                billable:
-                  displayName: Billable
-                  order: 111
-                  type: String
-
-                business_duration:
-                  displayName: Business duration
-                  description: Business time elapsed before task was closed
-                  order: 29
-                  type: String
-
-                business_service:
-                  displayName: Business service
-                  order: 77
-                  type: String
-
-                calendar_duration:
-                  displayName: Duration
-                  description: Time elapsed before task was closed
-                  order: 91
-                  type: String
-
-                cat_item:
-                  displayName: Item
-                  order: 53
-                  type: String
-
-                close_notes:
-                  displayName: Close notes
-                  order: 92
-                  type: String
-
-                closed_at:
-                  displayName: Closed
-                  order: 75
-                  type: String
-
-                closed_by:
-                  displayName: Closed by
-                  order: 45
-                  type: String
-
-                cmdb_ci:
-                  displayName: Configuration item
-                  description: Item or service affected
-                  order: 20
-                  type: String
-
-                comments:
-                  displayName: Additional comments
-                  description: Journaled field, shared with the end user
-                  order: 102
-                  type: String
-
-                comments_and_work_notes:
-                  displayName: Comments and Work notes
-                  description: Combined output of Additional comments and Work notes
-                  order: 50
-                  type: String
-
-                company:
-                  displayName: Company
-                  order: 99
-                  type: String
-
-                configuration_item:
-                  displayName: Configuration item
-                  order: 83
-                  type: String
-
-                contact_type:
-                  displayName: Contact type
-                  order: 94
-                  type: String
-
-                context:
-                  displayName: Context
-                  order: 13
-                  type: String
-
-                contract:
-                  displayName: Contract
-                  order: 23
-                  type: String
-
-                correlation_display:
-                  displayName: Correlation display
-                  order: 38
-                  type: String
-
-                correlation_id:
-                  displayName: Correlation ID
-                  order: 58
-                  type: String
-
-                delivery_plan:
-                  displayName: Delivery plan
-                  order: 21
-                  type: String
-
-                delivery_task:
-                  displayName: Delivery task
-                  order: 39
-                  type: String
-
-                description:
-                  displayName: Description
-                  description: What change steps will be performed?
-                  order: 90
-                  type: String
-
-                due_date:
-                  displayName: Due date
-                  description: Expected date from assigned to
-                  order: 107
-                  type: String
-
-                escalation:
-                  displayName: Escalation
-                  order: 56
-                  type: String
-
-                estimated_delivery:
-                  displayName: Estimated Delivery
-                  order: 59
-                  type: String
-
-                expected_start:
-                  displayName: Expected start
-                  order: 80
-                  type: String
-
-                flow_context:
-                  displayName: Flow Context
-                  order: 81
-                  type: String
-
-                follow_up:
-                  displayName: Follow up
-                  order: 46
-                  type: String
-
-                group_list:
-                  displayName: Group list
-                  description: Interested groups
-                  order: 30
-                  type: String
-
-                impact:
-                  displayName: Impact
-                  description: Measure of the business criticality of the affected service
-                  order: 24
-                  type: String
-
-                knowledge:
-                  displayName: Knowledge
-                  description: If checked, will automatically create a Draft knowledge article upon closure
-                  order: 16
-                  type: String
-
-                location:
-                  displayName: Location
-                  description: Where the caller or service is located
-                  order: 115
-                  type: String
-
-                made_sla:
-                  displayName: Made SLA
-                  order: 61
-                  type: String
-
-                needs_attention:
-                  displayName: Needs attention
-                  description: If checked, the agent needs to review this task.
-                  order: 33
-                  type: String
-
-                number:
-                  displayName: Number
-                  order: 9
-                  type: String
-
-                opened_at:
-                  displayName: Opened
-                  order: 82
-                  type: String
-
-                opened_by:
-                  displayName: Opened by
-                  order: 67
-                  type: String
-
-                order:
-                  displayName: Order
-                  order: 17
-                  type: String
-
-                order_guide:
-                  displayName: Order Guide
-                  order: 34
-                  type: String
-
-                parent:
-                  displayName: Parent
-                  order: 0
-                  type: String
-
-                personal_printer:
-                  displayName: Personal Printer
-                  order: 98
-                  type: String
-
-                price:
-                  displayName: Price
-                  order: 10
-                  type: String
-
-                printer_access_similar_to:
-                  displayName: Printer Access Similar To
-                  order: 65
-                  type: String
-
-                priority:
-                  displayName: Priority
-                  description: Sequence in which an Incident or Problem needs to be resolved, based on impact and urgency
-                  order: 27
-                  type: String
-
-                quantity:
-                  displayName: Quantity
-                  order: 103
-                  type: String
-
-                reassignment_count:
-                  displayName: Reassignment count
-                  order: 47
-                  type: String
-
-                recurring_frequency:
-                  displayName: Recurring Price Frequency
-                  order: 12
-                  type: String
-
-                recurring_price:
-                  displayName: Recurring Price
-                  order: 109
-                  type: String
-
-                request:
-                  displayName: Request
-                  order: 86
-                  type: String
-
-                requested_for:
-                  displayName: Requested for
-                  description: On behalf of another individual
-                  order: 4
-                  type: String
-
-                route_reason:
-                  displayName: Route reason
-                  order: 73
-                  type: String
-
-                sc_catalog:
-                  displayName: Catalog
-                  order: 2
-                  type: String
-
-                service_offering:
-                  displayName: Service offering
-                  order: 43
-                  type: String
-
-                short_description:
-                  displayName: Short description
-                  order: 37
-                  type: String
-
-                skills:
-                  displayName: Skills
-                  description: Required skills
-                  order: 8
-                  type: String
-
-                sla_due:
-                  displayName: SLA due
-                  description: Date by which the SLA expects this task to be completed
-                  order: 49
-                  type: String
-
-                sn_esign_document:
-                  displayName: E-signature document
-                  description: E-Signature document
-                  order: 63
-                  type: String
-
-                sn_esign_esignature_configuration:
-                  displayName: E-signature template
-                  description: E-Signature configuration
-                  order: 95
-                  type: String
-
-                stage:
-                  displayName: Stage
-                  order: 54
-                  type: String
-
-                state:
-                  displayName: State
-                  order: 14
-                  type: String
-
-                sys_class_name:
-                  displayName: Task type
-                  order: 44
-                  type: String
-
-                sys_created_by:
-                  displayName: Created by
-                  order: 15
-                  type: String
-
-                sys_created_on:
-                  displayName: Created
-                  order: 69
-                  type: String
-
-                sys_domain:
-                  displayName: Domain
-                  description: Domain to which the task belongs
-                  order: 70
-                  type: String
-
-                sys_id:
-                  displayName: Sys ID
-                  order: 93
-                  type: String
-
-                sys_mod_count:
-                  displayName: Updates
-                  order: 108
-                  type: String
-
-                sys_tags:
-                  displayName: Tags
-                  order: 110
-                  type: String
-
-                sys_updated_by:
-                  displayName: Updated by
-                  order: 66
-                  type: String
-
-                sys_updated_on:
-                  displayName: Updated
-                  order: 5
-                  type: String
-
-                task_effective_number:
-                  displayName: Effective number
-                  order: 64
-                  type: String
-
-                time_worked:
-                  displayName: Time worked
-                  order: 79
-                  type: String
-
-                u_add_task:
-                  displayName: Add Task
-                  order: 74
-                  type: String
-
-                u_additional_requested_softwar:
-                  displayName: Additional Requested Software
-                  order: 78
-                  type: String
-
-                u_amie_comments:
-                  displayName: AMIE Comments
-                  order: 104
-                  type: String
-
-                u_amie_rol__same_as_:
-                  displayName: AMIE Role (Same As)
-                  order: 42
-                  type: String
-
-                u_assigned_extension:
-                  displayName: Assigned Extension
-                  order: 106
-                  type: String
-
-                u_avature_comments:
-                  displayName: Avature Comments
-                  order: 71
-                  type: String
-
-                u_avature_role__same_as_:
-                  displayName: Avature Role (Same As)
-                  order: 52
-                  type: String
-
-                u_brand:
-                  displayName: Brand
-                  order: 96
-                  type: String
-
-                u_business_site:
-                  displayName: Business Site
-                  order: 35
-                  type: String
-
-                u_completed_by_orchestration:
-                  displayName: Completed by Orchestration
-                  order: 32
-                  type: String
-
-                u_department:
-                  displayName: Department
-                  order: 87
-                  type: String
-
-                u_department_code:
-                  displayName: Department Code
-                  order: 6
-                  type: String
-
-                u_employee:
-                  displayName: Employee
-                  order: 18
-                  type: String
-
-                u_employee_name:
-                  displayName: Employee
-                  order: 72
-                  type: String
-
-                u_fit_new_hire_url:
-                  displayName: FIT New Hire URL
-                  order: 51
-                  type: String
-
-                u_hire_date:
-                  displayName: Effective Date
-                  order: 114
-                  type: String
-
-                u_jira_key:
-                  displayName: Jira Key
-                  order: 55
-                  type: String
-
-                u_justification:
-                  displayName: Justification
-                  order: 11
-                  type: String
-
-                u_manager:
-                  displayName: Manager
-                  order: 60
-                  type: String
-
-                u_manually_created_tasks:
-                  displayName: Manually Created Tasks
-                  order: 22
-                  type: String
-
-                u_orch_ad_account_creation_time:
-                  displayName: Orch AD Account Creation Time
-                  order: 28
-                  type: String
-
-                u_orchestration_notes:
-                  displayName: Orchestration Notes
-                  order: 19
-                  type: String
-
-                u_position_title:
-                  displayName: Position Title
-                  order: 112
-                  type: String
-
-                u_tracking:
-                  displayName: Tracking
-                  order: 113
-                  type: String
-
-                u_user_created:
-                  displayName: User created
-                  order: 89
-                  type: String
-
-                u_workflow_created_tasks:
-                  displayName: Workflow Created Tasks
-                  order: 62
-                  type: String
-
-                universal_request:
-                  displayName: Universal Request
-                  order: 36
-                  type: String
-
-                upon_approval:
-                  displayName: Upon approval
-                  order: 57
-                  type: String
-
-                upon_reject:
-                  displayName: Upon reject
-                  order: 3
-                  type: String
-
-                urgency:
-                  displayName: Urgency
-                  description: Measure of the business criticality based on the impact and on the business needs of the Customer
-                  order: 97
-                  type: String
-
-                user_input:
-                  displayName: User input
-                  order: 68
-                  type: String
-
-                watch_list:
-                  displayName: Watch list
-                  description: Interested users
-                  order: 1
-                  type: String
-
-                work_end:
-                  displayName: Actual end
-                  order: 84
-                  type: String
-
-                work_notes:
-                  displayName: Work notes
-                  order: 85
-                  type: String
-
-                work_notes_list:
-                  displayName: Work notes list
-                  description: Users interested in work notes
-                  order: 26
-                  type: String
-
-                work_start:
-                  displayName: Actual start
-                  order: 40
-                  type: String
-
-      operationId: GetRecords
-
-    - kind: ConditionGroup
-      id: conditionGroup_toEKoO
-      conditions:
-        - id: conditionItem_OsX3Mb
-          condition: =IsEmpty(Topic.GetReqItemResult)
-          actions:
-            - kind: SendActivity
-              id: sendActivity_aFElKm
-              activity: It looks like you do not have any service requests that were previously opened.
-
-      elseActions:
-        - kind: ParseValue
-          id: MB1TQZ
-          variable: Topic.ReqItems
-          valueType:
-            kind: Table
-
-          value: "=\"[]\""
-
-        - kind: SetVariable
-          id: setVariable_gC7e0c
-          variable: Topic.ReqItems
-          value: =Topic.GetReqItemResult
-
-        - kind: SetVariable
-          id: setVariable_4D91gS
-          variable: Topic.ReqItemList
-          value: |-
-            =Concat(
-                ForAll(
-                    Topic.ReqItems,
-                    Concatenate(
-                        "Request Number: ", ThisRecord.number, Char(13), 
-                        "- ", "State: ", ThisRecord.state, Char(13),
-                        "- ", "Assigned To: ", ThisRecord.assigned_to, Char(13), 
-                        "- ", "Closed By: ", ThisRecord.closed_by, Char(13), 
-                        "- ", "Title: ", ThisRecord.cat_item, Char(13), 
-                        "- ", "Description: ", ThisRecord.short_description, Char(13), 
-                        "- ", "Opened On: ", DateValue(ThisRecord.opened_at), Char(13),Char(13)
-                    ) As Value
-                ), 
-                Value
-            )
-
-        - kind: SendActivity
-          id: sendActivity_mm0Xzi
-          activity: |-
-            {If(CountRows(Topic.ReqItems)=1,"I found one request.",Concatenate("Here is a list of your most recent ",CountRows(Topic.ReqItems)," requests."))}
-            
-            
-            {Topic.ReqItemList}
+            {Concatenate(
+                        "Request Number: ", First(Topic.ServiceRequest).number, Char(13), 
+                        "- ", "State: ", First(Topic.ServiceRequest).state, Char(13),
+                        "- ", "Assigned To: ", First(Topic.ServiceRequest).assigned_to, Char(13), 
+                        "- ", "Title: ", First(Topic.ServiceRequest).short_description, Char(13), 
+                        "- ", "Description: ", First(Topic.ServiceRequest).description, Char(13), 
+                        "- ", "Opened On: ", DateValue(First(Topic.ServiceRequest).opened_at), Char(13),Char(13)
+                    )
+            }
