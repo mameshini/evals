@@ -51,8 +51,8 @@ beginDialog:
           condition: =IsBlank(Global.SNCallerId)
           actions:
             - kind: GotoAction
-              id: UeCLQi
-              actionId: AOkbUC
+              id: 1zsSxL
+              actionId: 040ziP
 
     - kind: InvokeConnectorAction
       id: invokeConnectorAction_4OE66R
@@ -742,20 +742,19 @@ beginDialog:
           condition: =IsEmpty(Topic.ServiceRequestResults)
           actions:
             - kind: InvokeConnectorAction
-              id: z7LB6L
+              id: invokeConnectorAction_flrHzi
               input:
                 binding:
                   sysparm_display_value: true
-                  sysparm_exclude_reference_link: true
                   sysparm_limit: 1
                   sysparm_query: =Concatenate("number=",Topic.SNServiceRequestNumber,"^","caller_id=",Global.SNCallerId)
                   tableType: sc_req_item
 
               output:
                 binding:
-                  result: Topic.ServiceReqItemResults
+                  result: Topic.RequestItemResults
 
-              connectionReference: cr3fb_itHelpdeskV1.connectionreference.cr51e_itHelpDeskCopilot.cr.wC4Tw1wa
+              connectionReference: cr3fb_itHelpdeskV1.shared_service-now.shared-service-now-a0008fb7-ba04-458d-95bf-923574c26487
               connectionProperties:
                 mode: Maker
 
@@ -1375,13 +1374,13 @@ beginDialog:
               operationId: GetRecords
 
             - kind: ConditionGroup
-              id: conditionGroup_uVTSye
+              id: conditionGroup_RKYMfn
               conditions:
-                - id: conditionItem_GgAS4o
-                  condition: =IsEmpty(Topic.ServiceReqItemResults)
+                - id: conditionItem_TrChnl
+                  condition: =IsEmpty(Topic.RequestItemResults)
                   actions:
                     - kind: SendActivity
-                      id: AOkbUC
+                      id: 040ziP
                       activity:
                         text:
                           - I could not find a service request with that number for you. Please try again or choose to view all your service requests.
@@ -1391,8 +1390,8 @@ beginDialog:
 
               elseActions:
                 - kind: ParseValue
-                  id: kQg9vz
-                  variable: Topic.ReqItem
+                  id: zAB0I8
+                  variable: Topic.VarRequestItem
                   valueType:
                     kind: Table
                     properties:
@@ -1513,15 +1512,15 @@ beginDialog:
                       work_notes_list: String
                       work_start: String
 
-                  value: "=\"[]\""
+                  value: =[]
 
                 - kind: SetVariable
-                  id: setVariable_1wDZeH
+                  id: setVariable_XspjHV
                   variable: Topic.ReqItem
-                  value: =Topic.ServiceReqItemResults
+                  value: =Topic.RequestItemResults
 
                 - kind: SendActivity
-                  id: iSMCRP
+                  id: sendActivity_V7fYSW
                   activity: |-
                     Here is what I found.
                     
@@ -1637,6 +1636,7 @@ beginDialog:
               work_start: String
 
           value: "=\"[]\""
+          errorPolicy: ThrowError
 
         - kind: SetVariable
           id: setVariable_nF9PbU
