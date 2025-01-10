@@ -22,7 +22,7 @@ def get_caller(username, password, instance, email):
 
 def get_kb(username, password, instance, query_string):
     #encoded_query = f"textLIKE%{query_string}^kb_category NOT LIKE Internal Use"
-    encoded_query = f"article_bodyLIKE%{query_string}%^kb_category NOT LIKE Internal Use"
+    encoded_query = f"textLIKEreset password^kb_category NOT LIKEInternal Use^kb_category NOT LIKELanguage Operations^kb_knowledge_base LIKEKnowledge"
     query_params = {
         'sysparm_display_value': 'true',
         'sysparm_exclude_reference_link': 'true',
@@ -149,7 +149,7 @@ def main():
         print(f"Error retrieving incidents: {incidents_response.status_code}")
 
     # Get knowledge articles
-    query = "How to reset my password"
+    query = "password"
     kb_response = get_kb(username, password, instance, query)
     
     if kb_response.status_code == 200:

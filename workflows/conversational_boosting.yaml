@@ -4,24 +4,19 @@ beginDialog:
   id: main
   priority: -1
   actions:
-    - kind: ConditionGroup
-      id: conditionGroup_1iEEzW
-      conditions:
-        - id: conditionItem_evFljD
-          condition: =IsBlank(Topic.Question)
-          actions:
-            - kind: SetVariable
-              id: gHnNLC
-              variable: Topic.Question
-              value: =System.Activity.Text
+    - kind: SetVariable
+      id: 9TLQE3
+      variable: Global.Question
+      value: =System.Activity.Text
 
     - kind: InvokeConnectorAction
       id: fFHHCc
       input:
         binding:
           fields: text
-          limit: 3
-          query: =Topic.Question
+          filter: kb_categoryNOT LIKEInternal Use^kb_category NOT LIKELanguage Operations^kb_knowledge_base LIKEKnowledge
+          limit: 5
+          query: =Global.Question
 
       output:
         kind: SingleVariableOutputBinding
@@ -29,7 +24,7 @@ beginDialog:
 
       connectionReference: cr3fb_itHelpdeskV1.connectionreference.cr51e_itHelpDeskCopilot.cr.wC4Tw1wa
       connectionProperties:
-        mode: Invoker
+        mode: Maker
 
       operationId: GetKnowledgeArticles
 
@@ -105,7 +100,8 @@ beginDialog:
 
     - kind: SearchAndSummarizeContent
       id: search-content
-      variable: Topic.Answer
+      autoSend: true
+      variable: Global.VarAnswer
       userInput: =System.Activity.Text
       moderationLevel: Low
       applyModelKnowledgeSetting: false
@@ -121,19 +117,21 @@ beginDialog:
       knowledgeSources:
         kind: SearchAllKnowledgeSources
 
+      responseCaptureType: TextOnly
       tone: Friendly
 
     - kind: ConditionGroup
       id: has-answer-conditions
       conditions:
         - id: has-answer
-          condition: =!IsBlank(Topic.Answer)
+          condition: =!IsBlank(Global.VarAnswer)
 
       elseActions:
         - kind: SearchAndSummarizeContent
           id: e0Nape
           displayName: Fallback to external knowledge
-          variable: Topic.Answer
+          autoSend: true
+          variable: Global.VarAnswer
           userInput: =System.Activity.Text
           moderationLevel: Low
           publicDataSource: {}
@@ -145,8 +143,8 @@ beginDialog:
             searchFilesMode:
               kind: SearchSpecificFiles
               files:
+                - cr3fb_itHelpdeskV1.component.AccessingBusinessSystems.pdf_e-0
                 - cr3fb_itHelpdeskV1.component.Snowflake_MFA_Authentication_Setup.docx_udJ
-                - cr3fb_itHelpdeskV1.component.OneLoginKnowledgeBaseArticle.pdf_XI6
 
           knowledgeSources:
             kind: SearchSpecificKnowledgeSources
@@ -155,21 +153,86 @@ beginDialog:
           tone: Friendly
 
     - kind: SendActivity
-      id: f5tKaA
+      id: yCBWm2
       activity:
-        text:
-          - Is there anything else I can help you with?
+        attachments:
+          - kind: AdaptiveCardTemplate
+            cardContent: |-
+              ={
+                type: "AdaptiveCard",
+                '$schema': "http://adaptivecards.io/schemas/adaptive-card.json",
+                version: "1.3",
+                body: [
+                  {
+                    type: "Container",
+                    items: [
+                      {
+                        type: "ColumnSet",
+                        columns: [
+                            {
+                              type: "Column",
+                              width: "70",
+                              items: [        
+                                {
+                                  type: "TextBlock",
+                                  text: "Was this response helpful?",
+                                  wrap: true,
+                                  size: "Medium",
+                                  color: "Accent"
+                                },
+                              ]
+                            },
+                            {
+                              type: "Column",
+                              width: "15",
+                              items: [        
+                                {
+                                  type: "ActionSet",
+                                  actions: [
+                                    {
+                                      type: "Action.Submit",
+                                      title: "👍",
+                                      size: "Large",
+                                      data: {
+                                        MessageEvent: "AnswerFeedback",
+                                        Like: true
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              type: "Column",
+                              width: "15",
+                              items: [        
+                                {
+                                  type: "ActionSet",
+                                  actions: [
+                                    {
+                                      type: "Action.Submit",
+                                      title: "👎",
+                                      size: "Large",
+                                      data: {
+                                        MessageEvent: "AnswerFeedback",
+                                        Like: false
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                    ]
+                  }
+                ]
+              }
+
         quickReplies:
           - kind: MessageBack
-            title: What can I ask?
             text: What can I ask?
 
     - kind: EndDialog
       id: in81un
       clearTopicQueue: true
-
-inputType:
-  properties:
-    Question:
-      displayName: Question
-      type: String
