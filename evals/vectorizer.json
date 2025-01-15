@@ -1,0 +1,114 @@
+"fields": [
+    {
+      "name": "id",
+      "type": "Edm.String",
+      "key": true,
+      "retrievable": true,
+      "stored": true,
+      "searchable": false,
+      "filterable": false,
+      "sortable": false,
+      "facetable": false,
+      "synonymMaps": []
+    },
+    {
+      "name": "name",
+      "type": "Edm.String",
+      "key": false,
+      "retrievable": true,
+      "stored": true,
+      "searchable": true,
+      "filterable": true,
+      "sortable": true,
+      "facetable": false,
+      "analyzer": "standard.lucene",
+      "synonymMaps": []
+    },
+    {
+      "name": "description",
+      "type": "Edm.String",
+      "key": false,
+      "retrievable": true,
+      "stored": true,
+      "searchable": true,
+      "filterable": true,
+      "sortable": true,
+      "facetable": false,
+      "analyzer": "standard.lucene",
+      "synonymMaps": []
+    },
+    {
+      "name": "category",
+      "type": "Edm.String",
+      "key": false,
+      "retrievable": true,
+      "stored": true,
+      "searchable": true,
+      "filterable": true,
+      "sortable": true,
+      "facetable": false,
+      "analyzer": "standard.lucene",
+      "synonymMaps": []
+    },
+    {
+      "name": "contentVector",
+      "type": "Collection(Edm.Single)",
+      "key": false,
+      "retrievable": true,
+      "stored": true,
+      "searchable": true,
+      "filterable": false,
+      "sortable": false,
+      "facetable": false,
+      "synonymMaps": [],
+      "dimensions": 1536,
+      "vectorSearchProfile": "default"
+    },
+    {
+      "name": "url",
+      "type": "Edm.String",
+      "key": false,
+      "retrievable": true,
+      "stored": true,
+      "searchable": false,
+      "filterable": false,
+      "sortable": false,
+      "facetable": false,
+      "synonymMaps": []
+    }
+  ]
+
+  Sample Data:
+
+  [
+    {
+      "category": "Salesforce",
+      "chunk": "Access Request - Salesforce",
+      "chunk_id": "9da3e8837d70_aHR0cHM6Ly9hbW5hZ2VudHMuYmxvYi5jb3JlLndpbmRvd3MubmV0L3NlcnZpY2UtY2F0YWxvZy9jYXRhbG9nX2l0ZW1zLmNzdjsy0_pages_0",
+      "description": "Access Request for all instances of Salesforce",
+      "parent_id": "aHR0cHM6Ly9hbW5hZ2VudHMuYmxvYi5jb3JlLndpbmRvd3MubmV0L3NlcnZpY2UtY2F0YWxvZy9jYXRhbG9nX2l0ZW1zLmNzdjsy0",
+      "score": 0.9389298,
+      "text_vector": [
+        {},
+        {}
+      ],
+      "title": "catalog_items.csv",
+      "url": "https://amndev.service-now.com/sp?id=sc_cat_item&sys_id=009db1431b578c507283dce8dc4bcb86"
+    },
+    {
+        "category": "Salesforce",
+        "chunk": "Access Request - Salesforce",
+        "chunk_id": "9da3e8837d70_aHR0cHM6Ly9hbW5hZ2VudHMuYmxvYi5jb3JlLndpbmRvd3MubmV0L3NlcnZpY2UtY2F0YWxvZy9jYXRhbG9nX2l0ZW1zLmNzdjsy0_pages_0",
+        "description": "Access Request for all instances of Salesforce",
+        "parent_id": "aHR0cHM6Ly9hbW5hZ2VudHMuYmxvYi5jb3JlLndpbmRvd3MubmV0L3NlcnZpY2UtY2F0YWxvZy9jYXRhbG9nX2l0ZW1zLmNzdjsy0",
+        "score": 0.9389298,
+        "text_vector": [
+          {},
+          {}
+        ],
+        "title": "catalog_items.csv",
+        "url": "https://amndev.service-now.com/sp?id=sc_cat_item&sys_id=009db1431b578c507283dce8dc4bcb86"
+      }
+
+
+  ]
