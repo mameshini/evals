@@ -1527,7 +1527,6 @@ beginDialog:
                     {Concatenate(
                                 "Request Number: ", First(Topic.ReqItem).number, Char(13), 
                                 "- ", "State: ", First(Topic.ReqItem).state, Char(13),
-                                "- ", "Assigned To: ", First(Topic.ReqItem).assigned_to, Char(13), 
                                 "- ", "Closed By: ", First(Topic.ReqItem).closed_by, Char(13), 
                                 "- ", "Title: ", First(Topic.ReqItem).cat_item, Char(13), 
                                 "- ", "Description: ", First(Topic.ReqItem).short_description, Char(13), 

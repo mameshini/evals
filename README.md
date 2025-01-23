@@ -1,5 +1,9 @@
 # evals
 
+Evaluations and data preparation for Copilot Studio agents.
+
+Dialog flow for Copilot Studio agents.
+
 Examples of how to use Braintrust Proxy with Microsoft Semantic Kernel framework.
 The code demonstrates how to use Braintrust as an API proxy with Semantic Kernel.
 
@@ -8,6 +12,7 @@ Using Braintrust as the AI proxy allows the following benefits:
 - Simplify code by accessing many AI providers through a single API.
 - Reduce costs by automatically caching results when possible. 
 - Increase observability by logging all LLM requests to Braintrust.
+
 
 ## Prerequisites
 

@@ -1,0 +1,17 @@
+flowchart TB
+    A((IT Helpdesk Agent))
+    A --> C["Ask A Question"]
+    C --> KB[[Answer questions based on Knowledge Sources: ServiceNow KB, internal KB docs, LLM]]
+    A --> N["View Requests"]
+    A --> E["Create Request"]
+    A --> K["Lookup Request"]
+    E --> Q{"Which type?"}
+    Q --> BA["Business application support"]
+    BA --> FS1[[Forward to SNow request]]
+    Q --> AR["Access request"]
+    AR --> FS2[[Forward to SNow request]]
+    Q --> EOR["Errors and other requests"]
+    EOR --> CRI[[Create SNow incident]]
+    A --> L["Start Over"]
+    A --> G["Feedback<br>Thank you"]
+    A --> B["Call Helpdesk"]

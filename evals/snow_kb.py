@@ -255,6 +255,84 @@ def search_catalog_items(username, password, instance, description):
     
     return response
 
+def create_service_request(username, password, instance, description):
+
+    # Fist lookup  cat_item sys_id using Table API for cat_item name = "Other Service Requests"
+    cat_item_url = f"https://{instance}.service-now.com/api/now/table/sc_cat_item"
+    cat_item_params = {
+        'sysparm_query': 'nameLIKEOther Service Requests',
+        'sysparm_fields': 'sys_id,name',
+        'sysparm_limit': 10
+    }
+
+    cat_item_response = requests.get(
+        cat_item_url,
+        auth=(username, password),
+        headers={'Accept': 'application/json'},
+        params=cat_item_params
+    )
+
+    if cat_item_response.status_code == 200:
+        cat_item_data = cat_item_response.json()
+        if 'result' in cat_item_data and len(cat_item_data['result']) > 0:
+            cat_item_sys_id = cat_item_data['result'][0]['sys_id']
+
+            url = f"https://{instance}.service-now.com/api/now/table/item_option_new"
+            params = {
+                "sysparm_query": f"cat_item={cat_item_sys_id}",
+                "sysparm_fields": "sys_id,name,question_text,mandatory,type",
+                "sysparm_limit": 100
+            }
+            response = requests.get(url, auth=(username, password), params=params)
+            if response.status_code == 200:
+                print("\nRequired Variables:")
+                for var in response.json().get("result", []):
+                    print(f"Name: {var['name']}")
+                    print(f"Question: {var['question_text']}")
+                    print(f"Mandatory: {var['mandatory']}")
+                    print(f"Type: {var['type']}")
+                    print("---")
+
+            url = f"https://{instance}.service-now.com/api/now/table/item_option_new?sysparm_query=cat_item={cat_item_sys_id}"
+            response = requests.get(url, auth=(username, password))
+            print("Variable details:", response.json())
+
+            # Use order_now endpoint to create request
+            order_url = f"https://{instance}.service-now.com/api/sn_sc/servicecatalog/items/{cat_item_sys_id}/order_now"
+            order_data = {
+                "sysparm_quantity": "1",
+                "sysparm_id": cat_item_sys_id,
+                "variables": {
+                        "requested_for": "da1fc28a47ec1e106432b0da216d4308",
+                        "Description": description,
+                        "short_description":"Test variable",
+                        "description":"Test variable",
+                }
+            }
+
+            order_response = requests.post(
+                order_url,
+                auth=(username, password),
+                headers={
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                json=order_data
+            )
+
+            if order_response.status_code == 200:
+                print(f"Request created successfully: {order_response.json()}")
+                return order_response
+            else:
+                print("Request Headers:", order_response.request.headers)
+                print("Request Body:", order_response.request.body)
+                print("Response Headers:", order_response.headers)
+                print("Response Body:", order_response.text) 
+                print(f"Error creating request: {order_response.status_code} - {order_response.text}")
+                return None
+
+    return None        
+
 
 def main():
     load_dotenv()
@@ -284,8 +362,12 @@ def main():
 
     print("\nSearching catalog items...")
     search_description = ""  # Example search term
-    search_catalog_items(username, password, instance, search_description)
+    # search_catalog_items(username, password, instance, search_description)
 
+    print("\nCreating service request...")
+    description = "Test service request."
+    create_service_request(username, password, instance, description)
+    
 
 if __name__ == "__main__":
     main()
