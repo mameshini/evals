@@ -1,0 +1,27 @@
+kind: AdaptiveDialog
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - ask a question
+
+  actions:
+    - kind: Question
+      id: question_kDH7qL
+      interruptionPolicy:
+        allowInterruption: true
+
+      variable: init:Topic.QuestionAsked
+      prompt: What question do you wish to ask?
+      entity: StringPrebuiltEntity
+
+    - kind: BeginDialog
+      id: KAMBe8
+      dialog: cr3fb_itHelpdeskV1.topic.Conversationalboosting
+
+outputType:
+  properties:
+    QuestionAsked:
+      displayName: QuestionAsked
+      type: String

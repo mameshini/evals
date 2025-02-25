@@ -6,8 +6,9 @@ def get_caller(username, password, instance, email):
     query_params = {
         'sysparm_display_value': 'true',
         'sysparm_exclude_reference_link': 'true',
-        'sysparm_limit': 1,
+        'sysparm_limit': 10,
         'sysparm_query': f'email={email}'
+#       'sysparm_query': f'email={email}^user_name!=^employee_number!=^active=true^department!='
     }
 
     url = f"https://{instance}.service-now.com/api/now/table/sys_user"
@@ -22,7 +23,7 @@ def get_caller(username, password, instance, email):
 
 def get_kb(username, password, instance, query_string):
     #encoded_query = f"textLIKE%{query_string}^kb_category NOT LIKE Internal Use"
-    encoded_query = f"textLIKEreset password^kb_category NOT LIKEInternal Use^kb_category NOT LIKELanguage Operations^kb_knowledge_base LIKEKnowledge"
+    encoded_query = f"textLIKEreset password^kb_category NOT LIKEInternal Use^kb_category NOT LIKELanguage Operations^kb_knowledge_base LIKEKnowledge^workflow_state=published"
     query_params = {
         'sysparm_display_value': 'true',
         'sysparm_exclude_reference_link': 'true',
@@ -50,6 +51,14 @@ def view_incidents(username, password, instance, caller_id):
         'sysparm_fields': 'number,description,state,priority,opened_at,sys_id'
     }
 
+    # For Sheirman, use the following query:
+    query_params = {
+        'sysparm_display_value': 'true',
+        'sysparm_exclude_reference_link': 'true',
+        'sysparm_query': f'assigned_to=316e1091185c9500e83321ca641a6082^ORDERBYDESCopened_at',
+        'sysparm_fields': 'number,description,state,priority,opened_at,assigned_to,sys_id'
+    }
+
     url = f"https://{instance}.service-now.com/api/now/table/incident"
 
     response = requests.get(
@@ -67,7 +76,8 @@ def view_service_requests(username, password, instance, caller_email):
     query_params = {
         'sysparm_display_value': 'true',
         'sysparm_exclude_reference_link': 'true',
-        'sysparm_query': f'requested_for={caller_id}^ORDERBYDESCopened_at',
+#       'sysparm_query': f'requested_for={caller_id}^ORDERBYDESCopened_at',
+        'sysparm_query': 'active=true^ORDERBYDESCopened_at^sysparm_limit=10',
         'sysparm_fields': 'number,short_description,cat_item,comments_and_work_notes,state,priority,opened_at,sys_id,requested_for,opened_by'
     }
 
@@ -100,7 +110,6 @@ def print_requests(username, password, instance, email):
                 print(f"Opened: {request['opened_at']}")
                 print(f"Requested For: {request['requested_for']}")
                 print(f"Requested By: {request['opened_by']}")
-                print(f"Comments and Work Notes: {request['comments_and_work_notes']}")
                 print("------------------")
     else:
         print(f"Error retrieving service requests: {service_requests_response.status_code}")
@@ -354,19 +363,24 @@ def main():
             print(f"User user_name: {user['user_name']}")
             print(f"First Name: {user['first_name']}")
             print(f"Last Name: {user['last_name']}")
+            print(f"Employee Number: {user['employee_number']}")
+            print(f"Department: {user['department']}")
         else:
             print("No user found with the specified email")
     else:
         print(f"Error: Status code {response.status_code}")
         print(response.text)
 
+    view_incidents(username, password, instance, email)
+    print_requests(username, password, instance, email)
+
     print("\nSearching catalog items...")
     search_description = ""  # Example search term
     # search_catalog_items(username, password, instance, search_description)
 
-    print("\nCreating service request...")
-    description = "Test service request."
-    create_service_request(username, password, instance, description)
+    #print("\nCreating service request...")
+    #description = "Test service request."
+    #create_service_request(username, password, instance, description)
     
 
 if __name__ == "__main__":

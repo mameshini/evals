@@ -88,7 +88,7 @@ beginDialog:
           text_2: =Topic.userFeedback
           text_3: =System.User.PrincipalName
           text_4: =Topic.VarLike
-          text_5: 1.0.6.8
+          text_5: 1.0.6.7
           text_6: User
 
       output: {}

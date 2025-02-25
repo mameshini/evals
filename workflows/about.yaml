@@ -1,0 +1,21 @@
+kind: AdaptiveDialog
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - Who am I
+      - About
+
+  actions:
+    - kind: SendActivity
+      id: sendActivity_l2dtE8
+      activity: |-
+        Hi {System.User.FirstName}, I am AMN Helpdesk agent, a virtual assistant developed by AMN Healthcare.
+        - Version number: 1.0.7.2
+        - Environment: {Env.co_EnvName}
+        
+        ### Core Features
+        - Knowledge: IT Helpdesk agent helps to troubleshoot hardware and software technical issues. If the agent is unable to resolve an issue, it can help create a ServiceNow ticket to escalate the problem to the IT support team. Users can also use the agent to check the status of their tickets.
+        - Capabilities: Answering questions and providing detailed explanations.
+        Assisting with ServiceNow tickets.

@@ -4,6 +4,7 @@ beginDialog:
   kind: OnRecognizedIntent
   id: main
   intent:
+    displayName: Create Ticket
     triggerQueries:
       - Create request
       - Create ticket
@@ -24,7 +25,7 @@ beginDialog:
 
       alwaysPrompt: true
       variable: init:Topic.requestType
-      prompt: Which type of request would you like to create?  Select "Business application request" for support with PeopleSoft, Salesforce, AMIE, Erecruit, Great Plains, and others.
+      prompt: Which type of ticket would you like to create?  Select "Business application request" for support with PeopleSoft, Salesforce, AMIE, Erecruit, Great Plains, and others.
       entity:
         kind: EmbeddedEntity
         definition:
@@ -92,7 +93,7 @@ beginDialog:
 
               connectionReference: cr3fb_itHelpdeskV1.shared_azureaisearch.shared-azureaisearch-113d3b3d-d29a-4b7f-abcd-170d03f8eb34
               connectionProperties:
-                mode: Invoker
+                mode: Maker
 
               operationId: IntegratedVectorSearch
 
@@ -128,46 +129,95 @@ beginDialog:
 
                   value: =Topic.SearchResults
 
-                - kind: SendActivity
-                  id: Mx0sXA
-                  activity:
-                    text:
-                      - |+
-                        Please use one of the following forms in ServiceNow that match your request.
+                - kind: ConditionGroup
+                  id: conditionGroup_uH3QBl
+                  conditions:
+                    - id: conditionItem_ZCFfyG
+                      condition: =Env.co_EnvName = "amndev"
+                      displayName: Dev
+                      actions:
+                        - kind: SendActivity
+                          id: ilcLKs
+                          activity:
+                            text:
+                              - |+
+                                Please use one of the following forms in ServiceNow that match your request.
 
-                    attachments:
-                      - kind: AdaptiveCardTemplate
-                        cardContent: |
-                          ={
-                              type: "AdaptiveCard",
-                              version: "1.3",
-                              body: [
-                                  {
-                                      type: "Container",
-                                      items: ForAll(
-                                          Topic.LinkTable,
+                            attachments:
+                              - kind: AdaptiveCardTemplate
+                                cardContent: |-
+                                  ={
+                                      type: "AdaptiveCard",
+                                      version: "1.3",
+                                      body: [
                                           {
-                                              type: "TextBlock",
-                                              text: "[" & chunk & "](" & url & ")",
-                                              wrap: true,
-                                              spacing: "medium"
-                                          }
-                                      ),
-                                      spacing: "large"
-                                  },
-                                  {
-                                      type: "Container",
-                                      items: [
+                                              type: "Container",
+                                              items: ForAll(
+                                                  Topic.LinkTable,
+                                                  {
+                                                      type: "TextBlock",
+                                                      text: "[" & chunk & "](" & Substitute(url, "amn.service", "amndev.service") & ")",
+                                                      wrap: true,
+                                                      spacing: "medium"
+                                                  }
+                                              ),
+                                              spacing: "large"
+                                          },
                                           {
-                                              type: "TextBlock",
-                                              text: "[IT - Other Request](https://amndev.service-now.com/sp?id=sc_cat_item&sys_id=5aacef50db95be40b0f67a8eaf961902)",
-                                              wrap: true,
-                                              spacing: "medium"
-                                          }
+                                              type: "Container",
+                                              items: [
+                                                  {
+                                                      type: "TextBlock",
+                                                      text: "[IT - Other Request](https://amndev.service-now.com/sp?id=sc_cat_item&sys_id=5aacef50db95be40b0f67a8eaf961902)",
+                                                      wrap: true,
+                                                      spacing: "medium"
+                                                  }
+                                              ]
+                                          }        
                                       ]
-                                  }        
-                              ]
-                          }
+                                  }
+
+                  elseActions:
+                    - kind: SendActivity
+                      id: ijCduh
+                      activity:
+                        text:
+                          - |+
+                            Please use one of the following forms in ServiceNow that match your request.
+
+                        attachments:
+                          - kind: AdaptiveCardTemplate
+                            cardContent: |-
+                              ={
+                                  type: "AdaptiveCard",
+                                  version: "1.3",
+                                  body: [
+                                      {
+                                          type: "Container",
+                                          items: ForAll(
+                                              Topic.LinkTable,
+                                              {
+                                                  type: "TextBlock",
+                                                  text: "[" & chunk & "](" & url & ")",
+                                                  wrap: true,
+                                                  spacing: "medium"
+                                              }
+                                          ),
+                                          spacing: "large"
+                                      },
+                                      {
+                                          type: "Container",
+                                          items: [
+                                              {
+                                                  type: "TextBlock",
+                                                  text: "[IT - Other Request](https://amn.service-now.com/sp?id=sc_cat_item&sys_id=5aacef50db95be40b0f67a8eaf961902)",
+                                                  wrap: true,
+                                                  spacing: "medium"
+                                              }
+                                          ]
+                                      }        
+                                  ]
+                              }
 
                 - kind: Question
                   id: question_RziupE
@@ -247,7 +297,7 @@ beginDialog:
               repeatCount: 1
               alwaysPrompt: true
               variable: Topic.ShortDescription
-              prompt: Provide a short title for the request.
+              prompt: Provide a short title for the ticket.
               entity: StringPrebuiltEntity
 
             - kind: Question
@@ -279,7 +329,7 @@ beginDialog:
               alwaysPrompt: true
               variable: Topic.IncidentCreateConfirm
               prompt: |-
-                Confirm whether or not to create a new incident with the following details.
+                Confirm whether or not to create a new ticket with the following details.
                 
                 **Title**: {Topic.ShortDescription}
                 
@@ -309,10 +359,11 @@ beginDialog:
                           actions:
                             - kind: BeginDialog
                               id: S6jNGx
-                              dialog: cr3fb_itHelpdeskV1.topic.CreateCaller
+                              dialog: cr3fb_itHelpdeskV1.topic.GetCaller
 
                     - kind: InvokeConnectorAction
                       id: D3hJlM
+                      displayName: Create Snow Incident
                       input:
                         binding:
                           body: "={caller_id: Global.SNCallerId, description: Topic.Description, short_description: Topic.ShortDescription}"
@@ -324,7 +375,7 @@ beginDialog:
                         binding:
                           result: Topic.CreateIncidentResult
 
-                      connectionReference: cr3fb_itHelpdeskV1.connectionreference.cr51e_itHelpDeskCopilot.cr.wC4Tw1wa
+                      connectionReference: cr3fb_itHelpdeskV1.shared_service-now.eafe6f13e4134dd48339c4068e6bc415
                       connectionProperties:
                         mode: Maker
 
@@ -333,407 +384,7 @@ beginDialog:
                           body:
                             isRequired: true
                             order: 1
-                            type:
-                              kind: Record
-                              properties:
-                                active:
-                                  order: 29
-                                  type: String
-
-                                activity_due:
-                                  description: Date by which the Inactivity Monitor expects the task to be updated
-                                  order: 76
-                                  type: String
-
-                                additional_assignee_list:
-                                  description: Additional assignees
-                                  order: 55
-                                  type: String
-
-                                approval:
-                                  order: 80
-                                  type: String
-
-                                approval_history:
-                                  order: 10
-                                  type: String
-
-                                approval_set:
-                                  order: 45
-                                  type: String
-
-                                assigned_to:
-                                  description: Person primarily responsible for working this task
-                                  order: 77
-                                  type: String
-
-                                assignment_group:
-                                  order: 54
-                                  type: String
-
-                                business_duration:
-                                  description: Business time elapsed before task was closed
-                                  order: 39
-                                  type: String
-
-                                business_impact:
-                                  order: 32
-                                  type: String
-
-                                business_service:
-                                  order: 31
-                                  type: String
-
-                                business_stc:
-                                  description: Business time elapsed (stored in seconds) before Incident was resolved
-                                  order: 56
-                                  type: String
-
-                                calendar_duration:
-                                  description: Time elapsed before task was closed
-                                  order: 60
-                                  type: String
-
-                                calendar_stc:
-                                  description: Time elapsed (stored in seconds) before Incident was Resolved
-                                  order: 23
-                                  type: String
-
-                                caller_id:
-                                  description: Person who reported or is affected by this incident
-                                  order: 42
-                                  type: String
-
-                                category:
-                                  order: 91
-                                  type: String
-
-                                cause:
-                                  order: 57
-                                  type: String
-
-                                caused_by:
-                                  description: Change request that caused the incident
-                                  order: 2
-                                  type: String
-
-                                child_incidents:
-                                  description: Number of child Incidents related to this Problem
-                                  order: 6
-                                  type: String
-
-                                close_code:
-                                  description: For use in reporting
-                                  order: 50
-                                  type: String
-
-                                close_notes:
-                                  order: 61
-                                  type: String
-
-                                closed_at:
-                                  order: 24
-                                  type: String
-
-                                closed_by:
-                                  order: 65
-                                  type: String
-
-                                cmdb_ci:
-                                  description: Item or service affected
-                                  order: 25
-                                  type: String
-
-                                comments:
-                                  description: Journaled field, shared with the end user
-                                  order: 79
-                                  type: String
-
-                                comments_and_work_notes:
-                                  description: Combined output of Additional comments and Work notes
-                                  order: 82
-                                  type: String
-
-                                company:
-                                  order: 74
-                                  type: String
-
-                                contact_type:
-                                  order: 69
-                                  type: String
-
-                                contract:
-                                  order: 27
-                                  type: String
-
-                                correlation_display:
-                                  order: 51
-                                  type: String
-
-                                correlation_id:
-                                  order: 89
-                                  type: String
-
-                                delivery_plan:
-                                  order: 26
-                                  type: String
-
-                                delivery_task:
-                                  order: 52
-                                  type: String
-
-                                description:
-                                  order: 58
-                                  type: String
-
-                                due_date:
-                                  description: Expected date from assigned to
-                                  order: 83
-                                  type: String
-
-                                escalation:
-                                  order: 87
-                                  type: String
-
-                                expected_start:
-                                  order: 37
-                                  type: String
-
-                                follow_up:
-                                  order: 66
-                                  type: String
-
-                                group_list:
-                                  description: Interested groups
-                                  order: 40
-                                  type: String
-
-                                hold_reason:
-                                  order: 7
-                                  type: String
-
-                                impact:
-                                  description: Measure of the business criticality of the affected service
-                                  order: 28
-                                  type: String
-
-                                incident_state:
-                                  description: Workflow state of the incident
-                                  order: 71
-                                  type: String
-
-                                knowledge:
-                                  description: If checked, will automatically create a Draft knowledge article upon closure
-                                  order: 21
-                                  type: String
-
-                                location:
-                                  description: Where the caller or service is located
-                                  order: 90
-                                  type: String
-
-                                made_sla:
-                                  order: 1
-                                  type: String
-
-                                notify:
-                                  order: 62
-                                  type: String
-
-                                number:
-                                  order: 11
-                                  type: String
-
-                                opened_at:
-                                  order: 38
-                                  type: String
-
-                                opened_by:
-                                  order: 14
-                                  type: String
-
-                                order:
-                                  order: 22
-                                  type: String
-
-                                origin_id:
-                                  order: 59
-                                  type: String
-
-                                origin_table:
-                                  description: Table of the Origin record
-                                  order: 8
-                                  type: String
-
-                                parent:
-                                  order: 0
-                                  type: String
-
-                                parent_incident:
-                                  description: Can be used to collect Incidents for the same root issue
-                                  order: 67
-                                  type: String
-
-                                priority:
-                                  description: Sequence in which an Incident or Problem needs to be resolved, based on impact and urgency
-                                  order: 33
-                                  type: String
-
-                                problem_id:
-                                  description: Related problem, if one exists
-                                  order: 73
-                                  type: String
-
-                                reassignment_count:
-                                  order: 75
-                                  type: String
-
-                                reopen_count:
-                                  description: Number of times Incident state has changed from Resolved or Closed to another state
-                                  order: 85
-                                  type: String
-
-                                reopened_by:
-                                  order: 70
-                                  type: String
-
-                                reopened_time:
-                                  order: 43
-                                  type: String
-
-                                resolved_at:
-                                  order: 44
-                                  type: String
-
-                                resolved_by:
-                                  order: 12
-                                  type: String
-
-                                rfc:
-                                  description: Related change, if one exists
-                                  order: 35
-                                  type: String
-
-                                route_reason:
-                                  order: 19
-                                  type: String
-
-                                service_offering:
-                                  order: 63
-                                  type: String
-
-                                severity:
-                                  order: 78
-                                  type: String
-
-                                short_description:
-                                  order: 49
-                                  type: String
-
-                                sla_due:
-                                  description: Date by which the SLA expects this task to be completed
-                                  order: 81
-                                  type: String
-
-                                state:
-                                  order: 18
-                                  type: String
-
-                                subcategory:
-                                  order: 46
-                                  type: String
-
-                                sys_class_name:
-                                  order: 64
-                                  type: String
-
-                                sys_created_by:
-                                  order: 20
-                                  type: String
-
-                                sys_created_on:
-                                  order: 16
-                                  type: String
-
-                                sys_domain:
-                                  description: Domain to which the task belongs
-                                  order: 17
-                                  type: String
-
-                                sys_domain_path:
-                                  order: 34
-                                  type: String
-
-                                sys_id:
-                                  order: 68
-                                  type: String
-
-                                sys_mod_count:
-                                  order: 84
-                                  type: String
-
-                                sys_tags:
-                                  order: 86
-                                  type: String
-
-                                sys_updated_by:
-                                  order: 13
-                                  type: String
-
-                                sys_updated_on:
-                                  order: 5
-                                  type: String
-
-                                task_effective_number:
-                                  order: 9
-                                  type: String
-
-                                time_worked:
-                                  order: 36
-                                  type: String
-
-                                universal_request:
-                                  order: 48
-                                  type: String
-
-                                upon_approval:
-                                  order: 88
-                                  type: String
-
-                                upon_reject:
-                                  order: 4
-                                  type: String
-
-                                urgency:
-                                  description: Measure of the business criticality based on the impact and on the business needs of the Customer
-                                  order: 72
-                                  type: String
-
-                                user_input:
-                                  order: 15
-                                  type: String
-
-                                watch_list:
-                                  description: Interested users
-                                  order: 3
-                                  type: String
-
-                                work_end:
-                                  order: 41
-                                  type: String
-
-                                work_notes:
-                                  order: 47
-                                  type: String
-
-                                work_notes_list:
-                                  description: Users interested in work notes
-                                  order: 30
-                                  type: String
-
-                                work_start:
-                                  order: 53
-                                  type: String
+                            type: Any
 
                           sysparm_display_value:
                             displayName: Display System References
@@ -769,7 +420,13 @@ beginDialog:
                               properties:
                                 action_status:
                                   displayName: Action status
-                                  order: 100
+                                  order: 106
+                                  type: String
+
+                                actions_taken:
+                                  displayName: Actions taken
+                                  description: Updates posted on major incident
+                                  order: 72
                                   type: String
 
                                 active:
@@ -780,18 +437,18 @@ beginDialog:
                                 activity_due:
                                   displayName: Activity due
                                   description: Date by which the Inactivity Monitor expects the task to be updated
-                                  order: 99
+                                  order: 105
                                   type: String
 
                                 additional_assignee_list:
                                   displayName: Additional assignee list
                                   description: Additional assignees
-                                  order: 35
+                                  order: 37
                                   type: String
 
                                 approval:
                                   displayName: Approval
-                                  order: 104
+                                  order: 110
                                   type: String
 
                                 approval_history:
@@ -799,65 +456,70 @@ beginDialog:
                                   order: 8
                                   type: String
 
+                                approval_set:
+                                  displayName: Approval set
+                                  order: 28
+                                  type: String
+
                                 assigned_to:
                                   displayName: Assigned to
                                   description: Person primarily responsible for working this task
-                                  order: 45
+                                  order: 47
                                   type: String
 
                                 assignment_group:
                                   displayName: Assignment group
-                                  order: 83
+                                  order: 89
                                   type: String
 
                                 business_duration:
                                   displayName: Business duration
                                   description: Business time elapsed before task was closed
-                                  order: 24
+                                  order: 25
                                   type: String
 
                                 business_impact:
                                   displayName: Business impact
-                                  order: 72
+                                  order: 77
                                   type: String
 
                                 business_service:
                                   displayName: Business service
-                                  order: 71
+                                  order: 76
                                   type: String
 
                                 business_stc:
                                   displayName: Business resolve time
                                   description: Business time elapsed (stored in seconds) before Incident was resolved
-                                  order: 84
+                                  order: 90
                                   type: String
 
                                 calendar_duration:
                                   displayName: Duration
                                   description: Time elapsed before task was closed
-                                  order: 89
+                                  order: 95
                                   type: String
 
                                 calendar_stc:
                                   displayName: Resolve time
                                   description: Time elapsed (stored in seconds) before Incident was Resolved
-                                  order: 69
+                                  order: 74
                                   type: String
 
                                 caller_id:
                                   displayName: Caller
                                   description: Person who reported or is affected by this incident
-                                  order: 78
+                                  order: 83
                                   type: String
 
                                 category:
                                   displayName: Category
-                                  order: 111
+                                  order: 117
                                   type: String
 
                                 cause:
                                   displayName: Probable cause
-                                  order: 85
+                                  order: 91
                                   type: String
 
                                 caused_by:
@@ -869,28 +531,28 @@ beginDialog:
                                 child_incidents:
                                   displayName: Child Incidents
                                   description: Number of child Incidents related to this Problem
-                                  order: 58
+                                  order: 62
                                   type: String
 
                                 close_code:
                                   displayName: Close code
                                   description: For use in reporting
-                                  order: 82
+                                  order: 88
                                   type: String
 
                                 close_notes:
                                   displayName: Close notes
-                                  order: 90
+                                  order: 96
                                   type: String
 
                                 closed_at:
                                   displayName: Closed
-                                  order: 70
+                                  order: 75
                                   type: String
 
                                 closed_by:
                                   displayName: Closed by
-                                  order: 39
+                                  order: 41
                                   type: String
 
                                 cmdb_ci:
@@ -902,17 +564,23 @@ beginDialog:
                                 comments:
                                   displayName: Additional comments
                                   description: Journaled field, shared with the end user
-                                  order: 103
+                                  order: 109
+                                  type: String
+
+                                comments_and_work_notes:
+                                  displayName: Comments and Work notes
+                                  description: Combined output of Additional comments and Work notes
+                                  order: 50
                                   type: String
 
                                 company:
                                   displayName: Company
-                                  order: 97
+                                  order: 103
                                   type: String
 
                                 contact_type:
                                   displayName: Channel
-                                  order: 92
+                                  order: 98
                                   type: String
 
                                 contract:
@@ -922,12 +590,12 @@ beginDialog:
 
                                 correlation_display:
                                   displayName: Correlation display
-                                  order: 31
+                                  order: 33
                                   type: String
 
                                 correlation_id:
                                   displayName: Correlation ID
-                                  order: 51
+                                  order: 54
                                   type: String
 
                                 delivery_plan:
@@ -937,40 +605,40 @@ beginDialog:
 
                                 delivery_task:
                                   displayName: Delivery task
-                                  order: 32
+                                  order: 34
                                   type: String
 
                                 description:
                                   displayName: Description
                                   description: What change steps will be performed?
-                                  order: 86
+                                  order: 92
                                   type: String
 
                                 due_date:
                                   displayName: Due date
                                   description: Expected date from assigned to
-                                  order: 105
+                                  order: 111
                                   type: String
 
                                 escalation:
                                   displayName: Escalation
-                                  order: 49
+                                  order: 52
                                   type: String
 
                                 expected_start:
                                   displayName: Expected start
-                                  order: 75
+                                  order: 80
                                   type: String
 
                                 follow_up:
                                   displayName: Follow up
-                                  order: 40
+                                  order: 42
                                   type: String
 
                                 group_list:
                                   displayName: Group list
                                   description: Interested groups
-                                  order: 25
+                                  order: 26
                                   type: String
 
                                 impact:
@@ -982,7 +650,7 @@ beginDialog:
                                 incident_state:
                                   displayName: Incident state
                                   description: Workflow state of the incident
-                                  order: 94
+                                  order: 100
                                   type: String
 
                                 knowledge:
@@ -999,28 +667,28 @@ beginDialog:
                                 location:
                                   displayName: Location
                                   description: Where the caller or service is located
-                                  order: 110
+                                  order: 116
                                   type: String
 
                                 made_sla:
                                   displayName: Made SLA
-                                  order: 54
+                                  order: 57
                                   type: String
 
                                 major_incident_state:
                                   displayName: Major incident state
-                                  order: 27
+                                  order: 29
                                   type: String
 
                                 needs_attention:
                                   displayName: Needs attention
                                   description: If checked, the agent needs to review this task.
-                                  order: 28
+                                  order: 30
                                   type: String
 
                                 notify:
                                   displayName: Notify
-                                  order: 36
+                                  order: 38
                                   type: String
 
                                 number:
@@ -1030,12 +698,12 @@ beginDialog:
 
                                 opened_at:
                                   displayName: Opened
-                                  order: 76
+                                  order: 81
                                   type: String
 
                                 opened_by:
                                   displayName: Opened by
-                                  order: 63
+                                  order: 67
                                   type: String
 
                                 order:
@@ -1045,7 +713,7 @@ beginDialog:
 
                                 origin_id:
                                   displayName: Origin
-                                  order: 88
+                                  order: 94
                                   type: String
 
                                 origin_table:
@@ -1056,7 +724,7 @@ beginDialog:
 
                                 overview:
                                   displayName: Overview
-                                  order: 102
+                                  order: 108
                                   type: String
 
                                 parent:
@@ -1067,19 +735,19 @@ beginDialog:
                                 parent_incident:
                                   displayName: Parent Incident
                                   description: Can be used to collect Incidents for the same root issue
-                                  order: 41
+                                  order: 43
                                   type: String
 
                                 priority:
                                   displayName: Priority
                                   description: Sequence in which an Incident or Problem needs to be resolved, based on impact and urgency
-                                  order: 23
+                                  order: 24
                                   type: String
 
                                 problem_id:
                                   displayName: Problem
                                   description: Related problem, if one exists
-                                  order: 96
+                                  order: 102
                                   type: String
 
                                 promoted_by:
@@ -1091,7 +759,7 @@ beginDialog:
                                 promoted_on:
                                   displayName: Promoted on
                                   description: Date and time of when this incident was promoted as major incident
-                                  order: 55
+                                  order: 58
                                   type: String
 
                                 proposed_by:
@@ -1103,64 +771,64 @@ beginDialog:
                                 proposed_on:
                                   displayName: Proposed
                                   description: Date and time when the incident was proposed as a major incident candidate
-                                  order: 67
+                                  order: 71
                                   type: String
 
                                 reassignment_count:
                                   displayName: Reassignment count
-                                  order: 44
+                                  order: 46
                                   type: String
 
                                 reopen_count:
                                   displayName: Reopen count
                                   description: Number of times Incident state has changed from Resolved or Closed to another state
-                                  order: 107
+                                  order: 113
                                   type: String
 
                                 reopened_by:
                                   displayName: Last reopened by
-                                  order: 42
+                                  order: 44
                                   type: String
 
                                 reopened_time:
                                   displayName: Last reopened at
-                                  order: 79
+                                  order: 84
                                   type: String
 
                                 resolved_at:
                                   displayName: Resolved
-                                  order: 80
+                                  order: 85
                                   type: String
 
                                 resolved_by:
                                   displayName: Resolved by
-                                  order: 60
+                                  order: 64
                                   type: String
 
                                 rfc:
                                   displayName: Change Request
                                   description: Related change, if one exists
-                                  order: 73
+                                  order: 78
                                   type: String
 
                                 route_reason:
                                   displayName: Route reason
-                                  order: 68
+                                  order: 73
                                   type: String
 
                                 service_offering:
                                   displayName: Service offering
-                                  order: 37
+                                  order: 39
                                   type: String
 
                                 severity:
                                   displayName: Severity
-                                  order: 101
+                                  order: 107
                                   type: String
 
                                 short_description:
                                   displayName: Short description
-                                  order: 30
+                                  order: 32
                                   type: String
 
                                 skills:
@@ -1172,19 +840,19 @@ beginDialog:
                                 sla_due:
                                   displayName: SLA due
                                   description: Date by which the SLA expects this task to be completed
-                                  order: 46
+                                  order: 48
                                   type: String
 
                                 sn_esign_document:
                                   displayName: E-signature document
                                   description: E-Signature document
-                                  order: 57
+                                  order: 61
                                   type: String
 
                                 sn_esign_esignature_configuration:
                                   displayName: E-signature template
                                   description: E-Signature configuration
-                                  order: 93
+                                  order: 99
                                   type: String
 
                                 state:
@@ -1194,12 +862,12 @@ beginDialog:
 
                                 subcategory:
                                   displayName: Subcategory
-                                  order: 81
+                                  order: 86
                                   type: String
 
                                 sys_class_name:
                                   displayName: Task type
-                                  order: 38
+                                  order: 40
                                   type: String
 
                                 sys_created_by:
@@ -1209,33 +877,33 @@ beginDialog:
 
                                 sys_created_on:
                                   displayName: Created
-                                  order: 65
+                                  order: 69
                                   type: String
 
                                 sys_domain:
                                   displayName: Domain
                                   description: Domain to which the task belongs
-                                  order: 66
+                                  order: 70
                                   type: String
 
                                 sys_id:
                                   displayName: Sys ID
-                                  order: 91
+                                  order: 97
                                   type: String
 
                                 sys_mod_count:
                                   displayName: Updates
-                                  order: 106
+                                  order: 112
                                   type: String
 
                                 sys_tags:
                                   displayName: Tags
-                                  order: 108
+                                  order: 114
                                   type: String
 
                                 sys_updated_by:
                                   displayName: Updated by
-                                  order: 62
+                                  order: 66
                                   type: String
 
                                 sys_updated_on:
@@ -1245,42 +913,42 @@ beginDialog:
 
                                 task_effective_number:
                                   displayName: Effective number
-                                  order: 59
+                                  order: 63
                                   type: String
 
                                 time_worked:
                                   displayName: Time worked
-                                  order: 74
+                                  order: 79
                                   type: String
 
                                 timeline:
                                   displayName: Timeline
-                                  order: 52
+                                  order: 55
                                   type: String
 
                                 trigger_rule:
                                   displayName: Trigger Rule
-                                  order: 34
+                                  order: 36
                                   type: String
 
                                 u_ado:
                                   displayName: ADO
-                                  order: 53
+                                  order: 56
                                   type: String
 
                                 u_afterhourssupport:
                                   displayName: After Hours Support
-                                  order: 87
+                                  order: 93
                                   type: String
 
                                 u_awaiting_user_count:
                                   displayName: Awaiting User Count
-                                  order: 98
+                                  order: 104
                                   type: String
 
                                 u_business_service:
                                   displayName: Business service
-                                  order: 61
+                                  order: 65
                                   type: String
 
                                 u_fcr:
@@ -1291,12 +959,17 @@ beginDialog:
 
                                 u_jira_key:
                                   displayName: Jira Key
-                                  order: 48
+                                  order: 51
+                                  type: String
+
+                                u_major_incident:
+                                  displayName: Major Incident
+                                  order: 59
                                   type: String
 
                                 u_other_ci:
                                   displayName: Other CI
-                                  order: 43
+                                  order: 45
                                   type: String
 
                                 u_other_ci_notes:
@@ -1307,32 +980,32 @@ beginDialog:
                                 u_resolution_time:
                                   displayName: Resolution Time(Minutes)
                                   description: Time taken to resolve the Incident in minutes
-                                  order: 56
+                                  order: 60
                                   type: String
 
                                 u_rework:
                                   displayName: Rework
-                                  order: 47
+                                  order: 49
                                   type: String
 
                                 u_sent:
                                   displayName: Sent
-                                  order: 26
+                                  order: 27
                                   type: String
 
                                 u_work_item:
                                   displayName: Work Item
-                                  order: 109
+                                  order: 115
                                   type: String
 
                                 universal_request:
                                   displayName: Universal Request
-                                  order: 29
+                                  order: 31
                                   type: String
 
                                 upon_approval:
                                   displayName: Upon approval
-                                  order: 50
+                                  order: 53
                                   type: String
 
                                 upon_reject:
@@ -1343,12 +1016,12 @@ beginDialog:
                                 urgency:
                                   displayName: Urgency
                                   description: Measure of the business criticality based on the impact and on the business needs of the Customer
-                                  order: 95
+                                  order: 101
                                   type: String
 
                                 user_input:
                                   displayName: User input
-                                  order: 64
+                                  order: 68
                                   type: String
 
                                 watch_list:
@@ -1359,12 +1032,23 @@ beginDialog:
 
                                 work_end:
                                   displayName: Actual end
-                                  order: 77
+                                  order: 82
+                                  type: String
+
+                                work_notes:
+                                  displayName: Work notes
+                                  order: 87
+                                  type: String
+
+                                work_notes_list:
+                                  displayName: Work notes list
+                                  description: Users interested in work notes
+                                  order: 23
                                   type: String
 
                                 work_start:
                                   displayName: Actual start
-                                  order: 33
+                                  order: 35
                                   type: String
 
                       operationId: CreateRecord
@@ -1469,10 +1153,7 @@ beginDialog:
 
                     - kind: SendActivity
                       id: xEedCn
-                      activity: |-
-                        Service incident {Topic.RequestDetails.number} was successfully created.
-                        
-                        WARNING: This version it for UAT only.  Your request will not be processed.
+                      activity: Service incident {Topic.RequestDetails.number} was successfully created.
 
                 - id: conditionItem_ZkQ0Ya
                   condition: =Topic.IncidentCreateConfirm = 'cr3fb_itHelpdeskV1.topic.CreateRequest.main.PcTV9D'.Cancel

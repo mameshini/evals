@@ -11,18 +11,22 @@ beginDialog:
 
     - kind: InvokeConnectorAction
       id: fFHHCc
+      latencyMessageSettings:
+        allowLatencyMessage: true
+        latencyMessage: Checking KB...
+
       input:
         binding:
           fields: text
-          filter: kb_categoryNOT LIKEInternal Use^kb_category NOT LIKELanguage Operations^kb_knowledge_base LIKEKnowledge
-          limit: 5
+          filter: kb_categoryNOT LIKEInternal Use^kb_category NOT LIKELanguage Operations^kb_knowledge_base LIKEKnowledge^workflow_state=published
+          limit: 6
           query: =Global.Question
 
       output:
         kind: SingleVariableOutputBinding
         variable: Topic.GetKnowledgeArticles
 
-      connectionReference: cr3fb_itHelpdeskV1.connectionreference.cr51e_itHelpDeskCopilot.cr.wC4Tw1wa
+      connectionReference: cr3fb_itHelpdeskV1.shared_service-now.eafe6f13e4134dd48339c4068e6bc415
       connectionProperties:
         mode: Maker
 
@@ -93,10 +97,23 @@ beginDialog:
       variable: Topic.KBData
       value: =Topic.GetKnowledgeArticles
 
-    - kind: SetVariable
-      id: RVZuKU
-      variable: Topic.KBCustomData
-      value: "=ForAll(Topic.KBData.articles, {Content: Concatenate(title, \" - \", Substitute(PlainText(fields.text.display_value), \"\\n\\r\", \"\")), ContentLocation: Concatenate(\"https://amndev.service-now.com/sp?id=kb_article_view&sysparm_article=\", number)})"
+    - kind: ConditionGroup
+      id: conditionGroup_IBnxTu
+      conditions:
+        - id: conditionItem_vQyJfT
+          condition: =Env.co_EnvName = "amndev"
+          displayName: Dev
+          actions:
+            - kind: SetVariable
+              id: setVariable_aOVcwL
+              variable: Topic.KBCustomData
+              value: "=ForAll(Topic.KBData.articles, {Content: Concatenate(title, \" - \", Substitute(PlainText(fields.text.display_value), \"\\n\\r\", \"\")), ContentLocation: Concatenate(\"https://amndev.service-now.com/sp?id=kb_article_view&sysparm_article=\", number)})"
+
+      elseActions:
+        - kind: SetVariable
+          id: cGA0aR
+          variable: Topic.KBCustomData
+          value: "=ForAll(Topic.KBData.articles, {Content: Concatenate(title, \" - \", Substitute(PlainText(fields.text.display_value), \"\\n\\r\", \"\")), ContentLocation: Concatenate(\"https://amn.service-now.com/sp?id=kb_article_view&sysparm_article=\", number)})"
 
     - kind: SearchAndSummarizeContent
       id: search-content
@@ -152,86 +169,104 @@ beginDialog:
           responseCaptureType: TextOnly
           tone: Friendly
 
-    - kind: SendActivity
-      id: yCBWm2
-      activity:
-        attachments:
-          - kind: AdaptiveCardTemplate
-            cardContent: |-
-              ={
-                type: "AdaptiveCard",
-                '$schema': "http://adaptivecards.io/schemas/adaptive-card.json",
-                version: "1.3",
-                body: [
-                  {
-                    type: "Container",
-                    items: [
+    - kind: SetVariable
+      id: setVariable_CBXLSY
+      variable: Topic.NoFeedback
+      value: |-
+        =If(
+            "How can I assist" in Global.VarAnswer || "You can ask" in Global.VarAnswer || "I'm here to assist" in Global.VarAnswer,
+            true,
+            false
+        )
+
+    - kind: ConditionGroup
+      id: conditionGroup_rhak7k
+      conditions:
+        - id: conditionItem_kKP95U
+          condition: =Topic.NoFeedback = true
+
+      elseActions:
+        - kind: SendActivity
+          id: iuSdhb
+          displayName: User Feedback
+          activity:
+            attachments:
+              - kind: AdaptiveCardTemplate
+                cardContent: |-
+                  ={
+                    type: "AdaptiveCard",
+                    '$schema': "http://adaptivecards.io/schemas/adaptive-card.json",
+                    version: "1.3",
+                    body: [
                       {
-                        type: "ColumnSet",
-                        columns: [
-                            {
-                              type: "Column",
-                              width: "70",
-                              items: [        
+                        type: "Container",
+                        items: [
+                          {
+                            type: "ColumnSet",
+                            columns: [
                                 {
-                                  type: "TextBlock",
-                                  text: "Was this response helpful?",
-                                  wrap: true,
-                                  size: "Medium",
-                                  color: "Accent"
-                                },
-                              ]
-                            },
-                            {
-                              type: "Column",
-                              width: "15",
-                              items: [        
-                                {
-                                  type: "ActionSet",
-                                  actions: [
+                                  type: "Column",
+                                  width: "70",
+                                  items: [        
                                     {
-                                      type: "Action.Submit",
-                                      title: "👍",
-                                      size: "Large",
-                                      data: {
-                                        MessageEvent: "AnswerFeedback",
-                                        Like: true
-                                      }
+                                      type: "TextBlock",
+                                      text: "Was this response helpful?",
+                                      wrap: true,
+                                      size: "Medium",
+                                      color: "Accent"
+                                    },
+                                  ]
+                                },
+                                {
+                                  type: "Column",
+                                  width: "15",
+                                  items: [        
+                                    {
+                                      type: "ActionSet",
+                                      actions: [
+                                        {
+                                          type: "Action.Submit",
+                                          title: "👍",
+                                          size: "Large",
+                                          data: {
+                                            MessageEvent: "AnswerFeedback",
+                                            Like: true
+                                          }
+                                        }
+                                      ]
                                     }
                                   ]
-                                }
-                              ]
-                            },
-                            {
-                              type: "Column",
-                              width: "15",
-                              items: [        
+                                },
                                 {
-                                  type: "ActionSet",
-                                  actions: [
+                                  type: "Column",
+                                  width: "15",
+                                  items: [        
                                     {
-                                      type: "Action.Submit",
-                                      title: "👎",
-                                      size: "Large",
-                                      data: {
-                                        MessageEvent: "AnswerFeedback",
-                                        Like: false
-                                      }
+                                      type: "ActionSet",
+                                      actions: [
+                                        {
+                                          type: "Action.Submit",
+                                          title: "👎",
+                                          size: "Large",
+                                          data: {
+                                            MessageEvent: "AnswerFeedback",
+                                            Like: false
+                                          }
+                                        }
+                                      ]
                                     }
                                   ]
                                 }
                               ]
                             }
-                          ]
-                        }
+                        ]
+                      }
                     ]
                   }
-                ]
-              }
 
-        quickReplies:
-          - kind: MessageBack
-            text: What can I ask?
+            quickReplies:
+              - kind: MessageBack
+                text: What can I ask?
 
     - kind: EndDialog
       id: in81un

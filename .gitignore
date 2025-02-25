@@ -6,3 +6,7 @@ incidents_servicedesk.csv
 incidents_servicedesk_large.csv
 catalog_items.csv
 manifest.json
+conversational_boosting.yaml
+nodapi.json
+private_key.p8
+tables.json

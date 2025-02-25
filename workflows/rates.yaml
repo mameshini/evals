@@ -1,0 +1,182 @@
+kind: AdaptiveDialog
+modelDescription: Answer all questions about rates, specialties, pricing, trends, order dates, order status, and order types.  The table contains data about healthcare staffing orders.
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - Rates
+      - Specialties
+      - pricing
+      - trends
+
+  actions:
+    - kind: ConditionGroup
+      id: conditionGroup_hxph7Q
+      conditions:
+        - id: conditionItem_w4cHhR
+          condition: =!IsEmpty(Global.CustomDataStr)
+          actions:
+            - kind: SearchAndSummarizeContent
+              id: poyG3p
+              latencyMessageSettings:
+                allowLatencyMessage: false
+
+              userInput: =System.Activity.Text
+              moderationLevel: Low
+              customDataSource:
+                searchResults: =Global.CustomDataStr
+
+              fileSearchDataSource:
+                searchFilesMode:
+                  kind: DoNotSearchFiles
+
+              knowledgeSources:
+                kind: SearchSpecificKnowledgeSources
+
+              responseCaptureType: TextOnly
+
+            - kind: EndDialog
+              id: AZQb1b
+
+    - kind: SetVariable
+      id: setVariable_usCbjm
+      variable: Global.SavedQuestion
+      value: =System.Activity.Text
+
+    - kind: Question
+      id: Question_PLHiDN
+      variable: Topic.State
+      prompt: What state are you interested in (CA, TX, or US for all states)?
+      entity:
+        kind: ClosedListEntityReference
+        entityId: cr3fb_marketAnalyst.entity.StateCode
+
+    - kind: Question
+      id: Question_MWtSuk
+      variable: Topic.StartDate
+      prompt: What is the start date for order history?
+      entity: DatePrebuiltEntity
+
+    - kind: Question
+      id: Question_TvPvcM
+      variable: Topic.EndDate
+      prompt: What is the end date?
+      entity: DatePrebuiltEntity
+
+    - kind: SendActivity
+      id: P17b0A
+      activity:
+        attachments:
+          - kind: AdaptiveCardTemplate
+            cardContent: "={ type: \"AdaptiveCard\", body: [ { type: \"TextBlock\", size: \"Medium\", weight: \"Bolder\", text: \"Summary\" }, { type: \"FactSet\", facts: [ { title: \"State\", value: Text(Topic.State) }, { title: \"Start Date\", value: Text(Topic.StartDate) }, { title: \"End Date\", value: Text(Topic.EndDate) } ] } ], '$schema': \"http://adaptivecards.io/schemas/adaptive-card.json\", version: \"1.5\"}"
+
+    - kind: SetVariable
+      id: setVariable_Cl7Gfg
+      variable: Global.SqlStatement
+      value: |
+        ="SELECT TOP 400 ORDERTYPE, ORDERSTATUS, ORDERDATE, STARTDATE, BOOKEDDATE, RESOURCETYPE, SPECIALTY, RATE, STATE " & "FROM DOC_AI_DB.INTERN.ORDER_SAMPLE_ANDREWT " & "WHERE STATE = '" & Topic.State & "' " & "AND ORDERDATE >= '" & Text(Topic.StartDate, "yyyy-MM-dd") & "' " & "AND ORDERDATE <= '" & Text(Topic.EndDate, "yyyy-MM-dd") & "' " & "ORDER BY ORDERDATE DESC"
+
+    - kind: SetVariable
+      id: MfFAyg
+      displayName: SAVE - working example
+      variable: Global.CustomDataStr
+      value: |-
+        =[
+            {
+              Content: "The rate for RN is $55 in Texas"
+            }
+        ]
+
+    - kind: InvokeFlowAction
+      id: invokeFlowAction_1dvVrh
+      input:
+        binding:
+          text: =Global.SqlStatement
+
+      output:
+        binding:
+          orderhistoryjson: Global.OrderHistoryJSON
+
+      flowId: 0287808f-a2b8-ef11-b8e8-7c1e52007db8
+
+    - kind: ParseValue
+      id: 9xvgxZ
+      variable: Topic.ParsedOrders
+      valueType:
+        kind: Table
+        properties:
+          BOOKEDDATE: String
+          MONTH: String
+          ORDERDATE: String
+          ORDERSTATUS: String
+          ORDERTYPE: String
+          RATE: Number
+          RESOURCETYPE: String
+          SPECIALTY: String
+          STARTDATE: String
+          STATE: String
+          YEAR: Number
+
+      value: =Global.OrderHistoryJSON
+
+    - kind: SetVariable
+      id: setVariable_IdNLMl
+      variable: Topic.CsvDataStr
+      value: |-
+        =Concat(
+            Topic.ParsedOrders,
+            BOOKEDDATE & "," &
+            ORDERTYPE & "," &
+            Text(RATE) & "," &
+            RESOURCETYPE & "," &
+            SPECIALTY & "," &
+            STARTDATE & "," &
+            STATE & "," &
+            Text(YEAR),
+            Char(10)
+        )
+
+    - kind: SetVariable
+      id: setVariable_4RF8en
+      displayName: Set OrderHistory CSV
+      variable: Global.OrderHistoryCSV
+      value: "=\"BOOKEDDATE,ORDERTYPE,RATE,RESOURCETYPE,SPECIALTY,STARTDATE,STATE\" & Char(10) & Topic.CsvDataStr"
+
+    - kind: SetVariable
+      id: setVariable_CHqG6x
+      displayName: Set Prompt
+      variable: Global.CustomDataStr
+      value: |-
+        =[
+            {
+                Content: Global.OrderHistoryCSV
+            }
+        ]
+
+    - kind: SearchAndSummarizeContent
+      id: 3u0vy0
+      userInput: =Global.SavedQuestion
+      moderationLevel: Low
+      additionalInstructions: |-
+        Act as an experienced data scientist. 
+        Before generating a response, please analyze the question for ambiguities, conflicting contexts, or terms that might lead to an inaccurate or speculative answer. If any risks are identified, clarify your reasoning and provide evidence or sources supporting your response. Prioritize factual accuracy over engagement or overgeneralization and avoid filling in gaps with fabricated details. If you're unsure, state explicitly where uncertainties lie.
+      customDataSource:
+        searchResults: =Global.CustomDataStr
+
+      fileSearchDataSource:
+        searchFilesMode:
+          kind: DoNotSearchFiles
+
+      knowledgeSources:
+        kind: SearchSpecificKnowledgeSources
+
+      responseCaptureType: TextOnly
+
+    - kind: EndDialog
+      id: CCZc36
+      clearTopicQueue: true
+
+    - kind: BeginDialog
+      id: cVWnXs
+      dialog: cr3fb_marketAnalyst.topic.RatesCopy
