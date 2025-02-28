@@ -2,9 +2,9 @@ flowchart TB
     A((IT Helpdesk Agent))
     A --> C["Ask A Question"]
     C --> KB[[Answer questions based on Knowledge Sources: ServiceNow KB, internal KB docs, LLM]]
-    A --> N["View Requests"]
-    A --> E["Create Request"]
-    A --> K["Lookup Request"]
+    A --> N["View Tickets"]
+    A --> E["Create Ticket"]
+    A --> K["Lookup Ticket"]
     E --> Q{"Which type?"}
     Q --> BA["Business application support"]
     BA --> FS1[[Forward to SNow request]]
